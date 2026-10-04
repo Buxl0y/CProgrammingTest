@@ -73,5 +73,22 @@ class H(BaseHTTPRequestHandler):
   if p=="/api/admin/question" and u["role"]=="admin":
    qid=c.execute("SELECT COALESCE(MAX(id),0)+1 FROM q").fetchone()[0]; c.execute("INSERT INTO q VALUES(?,?,?,?,?,?,?,?)",(qid,x["title"],x["body"],x.get("input",""),x.get("output",""),x.get("sample_in",""),x.get("sample_out",""),int(x.get("score",10)))); c.commit(); return send(self,{"id":qid})
   return send(self,{"error":"not found"},404)
-db().close()
-ThreadingHTTPServer((os.getenv("HOST","0.0.0.0"),int(os.getenv("PORT","8000"))),H).serve_forever()
+def main():
+    host = os.getenv("HOST", "0.0.0.0")
+    try:
+        port = int(os.getenv("PORT", "10000"))
+    except ValueError:
+        port = 10000
+    db().close()
+    server = ThreadingHTTPServer((host, port), H)
+    print(f"CProgrammingTest listening on http://{host}:{port}", flush=True)
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.server_close()
+
+if __name__ == "__main__":
+    main()
+
