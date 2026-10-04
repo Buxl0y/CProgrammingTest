@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+data/app.db
+tmp/*
+CProgrammingTest.zip
+CProgrammingTest.rar
+.DS_Store
