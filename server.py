@@ -55,21 +55,31 @@ class H(BaseHTTPRequestHandler):
   if not u:return send(self,{"error":"login"},401)
   if p=="/api/submit":
    qid=int(x["qid"]); code=x["code"]; q=c.execute("SELECT * FROM q WHERE id=?",(qid,)).fetchone(); tests=c.execute("SELECT * FROM tc WHERE qid=? ORDER BY id",(qid,)).fetchall()
+   total=len(tests); passed=0; score=0; err=""; status="RUNTIME_ERROR"
    with tempfile.TemporaryDirectory() as d:
-    src=Path(d)/"main.c"; exe=Path(d)/"main"; src.write_text(code)
+    src=Path(d)/"main.c"; exe=Path(d)/"main"; src.write_text(code,encoding="utf-8")
     try:
      cp=subprocess.run(["gcc",str(src),"-O2","-std=c11","-o",str(exe)],capture_output=True,text=True,timeout=5)
-     if cp.returncode: status="COMPILE_ERROR"; score=0; passed=0; err=cp.stderr
-     else:
-      passed=0; err=""; total=len(tests)
-      for t in tests:
-       try:
-        r=subprocess.run([str(exe)],input=t["input"],capture_output=True,text=True,timeout=2)
-        if r.returncode==0 and " ".join(r.stdout.split())==" ".join(t["expected"].split()): passed+=1
-       except Exception: pass
-      score=round(q["score"]*passed/total,2) if total else 0; status="ACCEPTED" if passed==total else "WRONG_ANSWER"
-   c.execute("INSERT INTO sub(user_id,qid,code,status,score,passed,total,error) VALUES(?,?,?,?,?,?,?,?)",(u["id"],qid,code,status,score,passed,len(tests),err)); c.commit()
-   return send(self,{"status":status,"score":score,"passed":passed,"total":len(tests),"error":err})
+    except subprocess.TimeoutExpired:
+     status="COMPILE_TIMEOUT"; err="Compiler timeout (5 seconds)"; cp=None
+    except Exception as e:
+     status="COMPILE_ERROR"; err=str(e); cp=None
+    if cp is not None and cp.returncode != 0:
+     status="COMPILE_ERROR"; err=cp.stderr or "Compilation failed"
+    elif cp is not None:
+     for t in tests:
+      try:
+       r=subprocess.run([str(exe)],input=t["input"],capture_output=True,text=True,timeout=2)
+       if r.returncode==0 and " ".join(r.stdout.split())==" ".join(t["expected"].split()):
+        passed += 1
+      except subprocess.TimeoutExpired:
+       err="One or more test cases exceeded the 2 second limit."
+      except Exception as e:
+       err=str(e)
+     score=round(q["score"]*passed/total,2) if total else 0
+     status="ACCEPTED" if passed==total else "WRONG_ANSWER"
+   c.execute("INSERT INTO sub(user_id,qid,code,status,score,passed,total,error) VALUES(?,?,?,?,?,?,?,?)",(u["id"],qid,code,status,score,passed,total,err)); c.commit()
+   return send(self,{"status":status,"score":score,"passed":passed,"total":total,"error":err})
   if p=="/api/admin/question" and u["role"]=="admin":
    qid=c.execute("SELECT COALESCE(MAX(id),0)+1 FROM q").fetchone()[0]; c.execute("INSERT INTO q VALUES(?,?,?,?,?,?,?,?)",(qid,x["title"],x["body"],x.get("input",""),x.get("output",""),x.get("sample_in",""),x.get("sample_out",""),int(x.get("score",10)))); c.commit(); return send(self,{"id":qid})
   return send(self,{"error":"not found"},404)
