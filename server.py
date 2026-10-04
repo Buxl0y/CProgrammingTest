@@ -1,8 +1,8 @@
-import os,sqlite3,secrets,hashlib,hmac,json,tempfile,subprocess
+import os,sqlite3,secrets,hashlib,hmac,json,tempfile,subprocess,base64,time
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from http import cookies
-BASE=Path(__file__).parent; DB=BASE/"data.db"; WEB=BASE/"index.html"; SESS={}
+BASE=Path(__file__).parent; DB=BASE/"data.db"; WEB=BASE/"index.html"; SESS={}; SESSION_SECRET=os.getenv("SESSION_SECRET","codinglab-demo-secret-change-in-render")
 def db():
  DB.parent.mkdir(exist_ok=True); c=sqlite3.connect(DB); c.row_factory=sqlite3.Row
  c.execute("CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY,username TEXT UNIQUE,password TEXT,role TEXT)")
@@ -26,9 +26,24 @@ class H(BaseHTTPRequestHandler):
   n=int(self.headers.get("Content-Length",0)); return json.loads(self.rfile.read(n) or b"{}")
  def user(self):
   auth=self.headers.get("Authorization","")
-  if auth.startswith("Bearer "):
-   return SESS.get(auth[7:].strip())
-  s=self.headers.get("Cookie",""); c=cookies.SimpleCookie(s); t=c.get("sid"); return SESS.get(t.value) if t else None
+  token=auth[7:].strip() if auth.startswith("Bearer ") else ""
+  if not token:
+   s=self.headers.get("Cookie",""); cc=cookies.SimpleCookie(s); t=cc.get("sid"); token=t.value if t else ""
+  u=SESS.get(token)
+  if u:return u
+  try:
+   raw,sig=token.rsplit(".",1); expected=hmac.new(SESSION_SECRET.encode(),raw.encode(),hashlib.sha256).hexdigest()
+   if not hmac.compare_digest(sig,expected): return None
+   payload=json.loads(base64.urlsafe_b64decode(raw+"==="))
+   if int(payload.get("e",0)) < int(time.time()): return None
+   c=db(); row=c.execute("SELECT * FROM users WHERE username=?",(str(payload.get("u","")),)).fetchone()
+   return dict(row) if row else None
+  except Exception:
+   return None
+ def make_token(self,username):
+  payload=base64.urlsafe_b64encode(json.dumps({"u":username,"e":int(time.time())+86400},separators=(",",":")).encode()).decode().rstrip("=")
+  sig=hmac.new(SESSION_SECRET.encode(),payload.encode(),hashlib.sha256).hexdigest()
+  return payload+"."+sig
  def do_GET(self):
   if self.path=="/" or self.path=="/index.html":
    b=WEB.read_bytes(); self.send_response(200); self.send_header("Content-Type","text/html; charset=utf-8"); self.send_header("Content-Length",str(len(b))); self.end_headers(); self.wfile.write(b); return
@@ -52,7 +67,7 @@ class H(BaseHTTPRequestHandler):
    username=str(x.get("username","")).strip().lower(); password=str(x.get("password",""))
    u=c.execute("SELECT * FROM users WHERE lower(username)=?",(username,)).fetchone(); ph=hashlib.sha256(password.encode()).hexdigest()
    if not u or not hmac.compare_digest(u["password"],ph): return send(self,{"error":"ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง"},401)
-   sid=secrets.token_urlsafe(32); SESS[sid]=dict(u); b=json.dumps({"user":dict(u),"token":sid},ensure_ascii=False).encode(); self.send_response(200); self.send_header("Content-Type","application/json; charset=utf-8"); self.send_header("Content-Length",str(len(b))); self.send_header("Set-Cookie",f"sid={sid}; HttpOnly; SameSite=Lax; Path=/"); self.end_headers(); self.wfile.write(b); return
+   sid=self.make_token(u["username"]); SESS[sid]=dict(u); b=json.dumps({"user":dict(u),"token":sid},ensure_ascii=False).encode(); self.send_response(200); self.send_header("Content-Type","application/json; charset=utf-8"); self.send_header("Content-Length",str(len(b))); self.send_header("Set-Cookie",f"sid={sid}; HttpOnly; SameSite=Lax; Path=/"); self.end_headers(); self.wfile.write(b); return
   if p=="/api/logout":
    u=self.user(); s=self.headers.get("Cookie",""); cc=cookies.SimpleCookie(s); t=cc.get("sid"); SESS.pop(t.value,None) if t else None; return send(self,{"ok":1})
   u=self.user()
