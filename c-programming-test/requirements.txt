@@ -1,0 +1,2 @@
+# No external Python packages required.
+# Python standard library + GCC are enough for the reference implementation.
