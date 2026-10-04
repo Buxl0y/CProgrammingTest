@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: cprogrammingtest
+    runtime: docker
+    plan: free
+    region: singapore
+    branch: main
+    autoDeploy: true
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /
