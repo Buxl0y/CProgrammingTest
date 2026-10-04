@@ -46,7 +46,8 @@ class H(BaseHTTPRequestHandler):
  def do_POST(self):
   p=self.path; x=self.read(); c=db()
   if p=="/api/login":
-   u=c.execute("SELECT * FROM users WHERE username=?",(x.get("username"),)).fetchone(); ph=hashlib.sha256(x.get("password","").encode()).hexdigest()
+   username=str(x.get("username","")).strip().lower(); password=str(x.get("password",""))
+   u=c.execute("SELECT * FROM users WHERE lower(username)=?",(username,)).fetchone(); ph=hashlib.sha256(password.encode()).hexdigest()
    if not u or not hmac.compare_digest(u["password"],ph): return send(self,{"error":"ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง"},401)
    sid=secrets.token_urlsafe(32); SESS[sid]=dict(u); self.send_response(200); self.send_header("Content-Type","application/json"); self.send_header("Set-Cookie",f"sid={sid}; HttpOnly; SameSite=Lax; Path=/"); self.end_headers(); self.wfile.write(json.dumps({"user":dict(u)}).encode()); return
   if p=="/api/logout":
