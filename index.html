@@ -1,17 +1,297 @@
-<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>C Programming Test</title><style>
-*{box-sizing:border-box}body{margin:0;font:14px Arial;background:#0b1020;color:#eef3ff}button,input,textarea{font:inherit}button{cursor:pointer}.hidden{display:none}.login{min-height:100vh;display:grid;place-items:center}.box,.card{background:#121a2d;border:1px solid #293653;border-radius:16px;padding:20px;box-shadow:0 15px 45px #0005}.login .box{width:380px}.login input{width:100%;padding:12px;margin:7px 0 12px;background:#0b1222;color:white;border:1px solid #293653;border-radius:9px}.primary{background:#4f8cff;color:white;border:0;border-radius:9px;padding:11px 15px;font-weight:bold}.top{height:60px;border-bottom:1px solid #293653;display:flex;align-items:center;justify-content:space-between;padding:0 16px;position:sticky;top:0;background:#0b1020;z-index:4}.app{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 60px)}aside{padding:14px;border-right:1px solid #293653}.q{padding:11px;margin:7px 0;background:#111a30;border:1px solid #293653;border-radius:9px;cursor:pointer}.q.active{border-color:#4f8cff}.main{padding:16px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}.card h2{margin-top:0}.problem{line-height:1.7;white-space:pre-wrap}.editor{width:100%;height:420px;background:#070c17;color:#dce6ff;border:1px solid #293653;border-radius:10px;padding:14px;font:13px monospace;resize:vertical}.bar{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}.result{margin-top:15px}.ok{color:#39d399}.bad{color:#ff657c}.muted{color:#91a0bf}.login h1{margin-bottom:5px}@media(max-width:850px){.app{grid-template-columns:1fr}aside{position:static}.grid{grid-template-columns:1fr}}</style></head><body>
-<div id="login" class="login"><div class="box"><h1>💻 C Programming Test</h1><p class="muted">ระบบสอบเขียนโปรแกรมภาษา C พร้อม Compiler</p><form id="lf"><input id="u" placeholder="Username"><input id="p" type="password" placeholder="Password"><button class="primary">เข้าสู่ระบบ</button></form><small class="muted">student / student123<br>admin / admin123</small><p id="le" class="bad"></p></div></div>
-<div id="app" class="hidden"><header class="top"><b>💻 C Programming Test</b><span><span id="who"></span> <button id="logout">ออกจากระบบ</button></span></header><div class="app"><aside><b>ข้อสอบ</b><div id="qs"></div></aside><main class="main"><div class="grid"><section class="card"><h2 id="title"></h2><div id="problem" class="problem"></div></section><section class="card"><h2>Code Editor</h2><textarea id="code" class="editor">#include <stdio.h>\n\nint main(){\n    return 0;\n}</textarea><div class="bar"><label><input id="file" type="file" accept=".c" hidden> <button onclick="file.click()">Upload .c</button></label><button class="primary" id="submit">Compile & Submit</button></div><div id="result" class="result"></div></section></div></main></div></div>
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CodingLab — C Programming Test</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap');
+:root{
+  --bg:#07111f;--panel:#0c1728;--panel2:#101d31;--line:#1d2d45;
+  --text:#edf4ff;--muted:#8292aa;--primary:#4f8cff;--primary2:#6e63ff;
+  --green:#39d399;--red:#ff6b81;--orange:#ffbd66;
+  --shadow:0 24px 70px rgba(0,0,0,.28);
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:Inter,"Noto Sans Thai",Arial,sans-serif;background:
+radial-gradient(circle at 15% -10%,rgba(79,140,255,.17),transparent 30%),
+radial-gradient(circle at 100% 0%,rgba(110,99,255,.14),transparent 28%),var(--bg);color:var(--text)}
+button,input,textarea{font:inherit}button{cursor:pointer}
+.hidden{display:none!important}.muted{color:var(--muted)}.mono{font-family:"SFMono-Regular",Consolas,monospace}
+.login-page{min-height:100vh;display:grid;place-items:center;padding:28px}
+.login-shell{width:min(1020px,100%);display:grid;grid-template-columns:1.08fr .92fr;min-height:620px;background:rgba(12,23,40,.86);border:1px solid rgba(133,157,198,.16);border-radius:30px;overflow:hidden;box-shadow:var(--shadow);backdrop-filter:blur(18px)}
+.login-brand{position:relative;padding:55px 54px;background:
+linear-gradient(145deg,rgba(79,140,255,.24),rgba(110,99,255,.06) 55%,transparent),
+radial-gradient(circle at 20% 20%,rgba(79,140,255,.2),transparent 24%)}
+.brand-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);font-size:12px;color:#b7c7df}
+.logo{display:flex;align-items:center;gap:14px;margin-top:82px}.logo-mark{width:54px;height:54px;display:grid;place-items:center;border-radius:16px;background:linear-gradient(135deg,var(--primary),var(--primary2));box-shadow:0 14px 30px rgba(79,140,255,.25);font-size:26px}
+.login-brand h1{font-size:42px;line-height:1.06;margin:20px 0 14px;letter-spacing:-1.5px}.login-brand p{max-width:460px;line-height:1.8;color:#9eb0ca}
+.feature-list{display:grid;gap:12px;margin-top:38px}.feature{display:flex;gap:12px;align-items:center;color:#cbd7ea}.feature-icon{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:rgba(79,140,255,.12);color:#87b1ff}
+.login-form{display:flex;align-items:center;padding:50px}.login-card{width:100%;max-width:390px;margin:auto}.login-card h2{font-size:28px;margin:0 0 8px}.login-card .sub{margin:0 0 28px;color:var(--muted);line-height:1.7}
+.field{margin-bottom:16px}.field label{display:block;margin-bottom:8px;color:#c8d5e9;font-weight:600;font-size:13px}.field input{width:100%;height:48px;padding:0 14px;border-radius:12px;border:1px solid var(--line);outline:none;background:#081322;color:#fff;transition:.2s}.field input:focus{border-color:rgba(79,140,255,.8);box-shadow:0 0 0 4px rgba(79,140,255,.11)}
+.login-btn{width:100%;height:50px;border:0;border-radius:12px;color:white;font-weight:700;background:linear-gradient(135deg,var(--primary),var(--primary2));box-shadow:0 12px 28px rgba(79,140,255,.2);margin-top:4px}.login-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.demo{margin-top:20px;padding:13px 14px;border:1px dashed #2a3a55;border-radius:12px;background:rgba(255,255,255,.025);font-size:12px;line-height:1.7}.error{min-height:22px;color:var(--red);font-size:13px;margin:12px 0 0}
+.app-shell{min-height:100vh}.topbar{height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid rgba(133,157,198,.12);background:rgba(7,17,31,.84);backdrop-filter:blur(15px);position:sticky;top:0;z-index:20}.brand-mini{display:flex;align-items:center;gap:11px}.brand-mini .logo-mark{width:38px;height:38px;border-radius:11px;font-size:18px}.brand-mini strong{font-size:15px}.brand-mini span{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+.user-area{display:flex;align-items:center;gap:12px}.avatar{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(135deg,#263b62,#182641);font-weight:800;color:#9fc3ff}.user-name{font-size:13px;text-align:right}.user-name small{display:block;color:var(--muted);margin-top:3px}
+.logout{border:1px solid #263650;background:rgba(255,255,255,.025);color:#bcc9dc;border-radius:10px;padding:9px 12px}.logout:hover{background:rgba(255,255,255,.05);color:#fff}
+.layout{display:grid;grid-template-columns:255px 1fr;min-height:calc(100vh - 72px)}.sidebar{padding:20px 15px;border-right:1px solid rgba(133,157,198,.12);background:rgba(8,19,33,.62)}.side-title{display:flex;justify-content:space-between;align-items:center;padding:0 8px 12px;font-size:12px;color:#8ea0ba;text-transform:uppercase;letter-spacing:.8px}.progress-pill{font-size:10px;padding:5px 8px;border-radius:999px;background:rgba(57,211,153,.09);color:var(--green)}
+.q-list{display:grid;gap:8px}.q{width:100%;display:flex;align-items:center;gap:10px;border:1px solid transparent;background:transparent;color:#afbdd1;padding:11px 10px;border-radius:12px;text-align:left;transition:.18s}.q:hover{background:rgba(255,255,255,.035);color:#fff}.q.active{background:linear-gradient(90deg,rgba(79,140,255,.16),rgba(79,140,255,.05));border-color:rgba(79,140,255,.25);color:#fff}.q-num{width:31px;height:31px;border-radius:9px;display:grid;place-items:center;background:#101d31;border:1px solid #22334d;font-size:12px;font-weight:700;flex:0 0 auto}.q.active .q-num{background:rgba(79,140,255,.18);color:#8eb4ff;border-color:rgba(79,140,255,.35)}.q-info{min-width:0}.q-info b{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.q-info span{font-size:10px;color:#6f8099}
+.main{padding:24px;max-width:1600px;width:100%;margin:auto}.welcome{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px}.welcome h2{margin:0 0 5px;font-size:25px;letter-spacing:-.5px}.welcome p{margin:0;color:var(--muted);font-size:13px}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:18px}.stat{padding:15px 16px;border-radius:15px;border:1px solid rgba(133,157,198,.12);background:rgba(12,23,40,.72)}.stat small{color:var(--muted);font-size:11px}.stat strong{display:block;font-size:21px;margin-top:6px}
+.work-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}.panel{border:1px solid rgba(133,157,198,.13);background:rgba(12,23,40,.82);border-radius:18px;box-shadow:0 12px 35px rgba(0,0,0,.14);overflow:hidden}.panel-head{padding:16px 18px;border-bottom:1px solid rgba(133,157,198,.1);display:flex;align-items:center;justify-content:space-between;gap:10px}.panel-title{display:flex;align-items:center;gap:10px}.panel-title h3{font-size:15px;margin:0}.tag{font-size:10px;padding:5px 8px;border-radius:999px;background:rgba(79,140,255,.1);border:1px solid rgba(79,140,255,.18);color:#91b8ff}.panel-body{padding:18px}.problem-title{font-size:23px;margin:0 0 10px}.problem-lead{font-size:13px;line-height:1.8;color:#b8c7db;margin-bottom:18px}
+.spec-grid{display:grid;gap:12px}.spec{background:#091524;border:1px solid rgba(133,157,198,.11);border-radius:13px;padding:12px}.spec label{display:block;color:#71849e;font-size:10px;text-transform:uppercase;letter-spacing:.7px;margin-bottom:7px}.spec div{white-space:pre-wrap;line-height:1.65;font-size:12px;color:#d7e2f2}.samples{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.code-area{padding:0 18px 18px}.editor-wrap{position:relative}.editor{width:100%;height:465px;display:block;resize:vertical;padding:18px 18px 18px 50px;border-radius:14px;border:1px solid #223550;outline:none;background:#06101c;color:#dce9fb;line-height:1.65;font-size:13px;font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace;tab-size:4;box-shadow:inset 0 0 35px rgba(0,0,0,.18)}.editor:focus{border-color:rgba(79,140,255,.55);box-shadow:0 0 0 3px rgba(79,140,255,.08),inset 0 0 35px rgba(0,0,0,.18)}.line-mark{position:absolute;left:14px;top:18px;bottom:18px;color:#3a4b64;font:13px/1.65 monospace;pointer-events:none;user-select:none}
+.toolbar{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-top:12px}.toolbar-left{display:flex;gap:8px}.btn{height:42px;padding:0 14px;border-radius:11px;border:1px solid #263752;color:#c7d4e8;background:#0a1727}.btn:hover{background:#102035;color:#fff}.btn-primary{border:0;background:linear-gradient(135deg,var(--primary),var(--primary2));color:white;font-weight:700;padding:0 18px;box-shadow:0 10px 24px rgba(79,140,255,.16)}.btn-primary:disabled{opacity:.6;cursor:wait}
+.result{margin-top:14px}.result-card{padding:15px;border-radius:14px;border:1px solid rgba(133,157,198,.12);background:#091624}.result-top{display:flex;justify-content:space-between;align-items:center}.status{display:inline-flex;align-items:center;gap:7px;font-weight:800;font-size:12px}.status::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 12px currentColor}.ok{color:var(--green)}.bad{color:var(--red)}.score-box{font-size:19px;font-weight:800}.result-meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;color:#91a1b9;font-size:12px}.result-error{margin:12px 0 0;padding:10px;border-radius:9px;background:rgba(255,107,129,.06);border:1px solid rgba(255,107,129,.13);white-space:pre-wrap;overflow:auto;font:11px/1.55 monospace;color:#ff9bab}
+.mobile-menu{display:none}
+.footer-note{margin-top:14px;color:#56677f;font-size:11px;text-align:right}
+@media(max-width:1100px){.login-shell{grid-template-columns:1fr}.login-brand{display:none}.work-grid{grid-template-columns:1fr}}
+@media(max-width:800px){.mobile-menu{display:inline-flex}.layout{grid-template-columns:1fr}.sidebar{position:fixed;left:0;top:72px;bottom:0;width:270px;z-index:15;transform:translateX(-105%);transition:.2s;box-shadow:20px 0 50px rgba(0,0,0,.35)}body.menu-open .sidebar{transform:translateX(0)}.main{padding:16px}.stats{grid-template-columns:1fr 1fr}.user-name{display:none}.topbar{padding:0 14px}.welcome{display:block}.samples{grid-template-columns:1fr}}
+@media(max-width:560px){.login-page{padding:14px}.login-form{padding:28px 22px}.login-shell{min-height:auto;border-radius:22px}.stats{grid-template-columns:1fr}.toolbar{align-items:stretch;flex-direction:column}.toolbar-left{display:grid;grid-template-columns:1fr}.btn-primary{width:100%}.panel-body{padding:15px}.code-area{padding:0 15px 15px}.editor{height:390px;padding-left:40px}.line-mark{left:10px}.brand-mini strong{font-size:13px}}
+</style>
+</head>
+<body>
+
+<section id="login" class="login-page">
+  <div class="login-shell">
+    <div class="login-brand">
+      <span class="brand-badge">● ONLINE JUDGE • C LANGUAGE</span>
+      <div class="logo"><div class="logo-mark">⌘</div><div><strong>CodingLab</strong><div class="muted" style="font-size:12px">Programming Assessment</div></div></div>
+      <h1>เขียน C<br>ให้ผ่านทุก Test Case</h1>
+      <p>แพลตฟอร์มทดสอบการเขียนโปรแกรมภาษา C พร้อม Compiler และระบบตรวจคำตอบแบบอัตโนมัติ</p>
+      <div class="feature-list">
+        <div class="feature"><span class="feature-icon">✓</span><span>Compile และ Run โค้ดได้ทันที</span></div>
+        <div class="feature"><span class="feature-icon">✓</span><span>ตรวจสอบหลาย Test Case พร้อมคำนวณคะแนน</span></div>
+        <div class="feature"><span class="feature-icon">✓</span><span>ใช้งานได้ทั้งคอมพิวเตอร์และมือถือ</span></div>
+      </div>
+    </div>
+    <div class="login-form">
+      <div class="login-card">
+        <h2>ยินดีต้อนรับ 👋</h2>
+        <p class="sub">เข้าสู่ระบบเพื่อเริ่มทำข้อสอบเขียนโปรแกรม</p>
+        <form id="lf">
+          <div class="field"><label for="u">USERNAME</label><input id="u" autocomplete="username" placeholder="กรอก Username"></div>
+          <div class="field"><label for="p">PASSWORD</label><input id="p" type="password" autocomplete="current-password" placeholder="กรอก Password"></div>
+          <button class="login-btn" id="loginBtn">เข้าสู่ระบบ</button>
+        </form>
+        <p id="le" class="error"></p>
+        <div class="demo"><b>บัญชีสำหรับทดสอบ</b><br><span class="mono">student</span> / <span class="mono">student123</span><br><span class="mono">admin</span> / <span class="mono">admin123</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="app" class="app-shell hidden">
+  <header class="topbar">
+    <div class="brand-mini">
+      <button class="btn mobile-menu" id="menuBtn">☰</button>
+      <div class="logo-mark">⌘</div>
+      <div><strong>CodingLab</strong><span>C Programming Test</span></div>
+    </div>
+    <div class="user-area">
+      <div class="user-name"><span id="who"></span><small id="roleText"></small></div>
+      <div class="avatar" id="avatar">S</div>
+      <button class="logout" id="logout">ออกจากระบบ</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="side-title"><span>ข้อสอบทั้งหมด</span><span class="progress-pill" id="progress">0 / 0</span></div>
+      <div id="qs" class="q-list"></div>
+    </aside>
+
+    <main class="main">
+      <div class="welcome">
+        <div><h2>สนามสอบเขียนโปรแกรม</h2><p>เลือกโจทย์ด้านซ้าย แล้วเขียนโค้ด C เพื่อส่งตรวจได้ทันที</p></div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><small>ข้อที่กำลังทำ</small><strong id="statQuestion">ข้อ 1</strong></div>
+        <div class="stat"><small>คะแนนเต็ม</small><strong id="statScore">10 คะแนน</strong></div>
+        <div class="stat"><small>ภาษา</small><strong>C / C11</strong></div>
+      </div>
+
+      <div class="work-grid">
+        <section class="panel">
+          <div class="panel-head"><div class="panel-title"><span class="tag">PROBLEM</span><h3>โจทย์ปัญหา</h3></div><span class="muted" style="font-size:11px">อ่านโจทย์ให้ครบก่อนส่ง</span></div>
+          <div class="panel-body">
+            <h1 id="title" class="problem-title">กำลังโหลด...</h1>
+            <div id="problem"></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <div class="panel-title"><span class="tag">C11</span><h3>Code Editor</h3></div>
+            <span class="muted mono" style="font-size:10px">gcc -std=c11</span>
+          </div>
+          <div class="code-area">
+            <div class="editor-wrap">
+              <div class="line-mark">1<br>2<br>3<br>4<br>5<br>6<br>7<br>8<br>9<br>10<br>11<br>12<br>13<br>14<br>15<br>16<br>17<br>18<br>19<br>20</div>
+              <textarea id="code" class="editor" spellcheck="false">#include &lt;stdio.h&gt;
+
+int main(void) {
+    return 0;
+}</textarea>
+            </div>
+            <div class="toolbar">
+              <div class="toolbar-left">
+                <input id="file" type="file" accept=".c" hidden>
+                <button class="btn" id="uploadBtn">↑ Upload .c</button>
+                <button class="btn" id="resetBtn">↺ Reset</button>
+              </div>
+              <button class="btn btn-primary" id="submit">▶ Compile &amp; Submit</button>
+            </div>
+            <div id="result" class="result"></div>
+          </div>
+        </section>
+      </div>
+      <div class="footer-note">ผลการตรวจจะใช้ทั้ง Public และ Hidden Test Case</div>
+    </main>
+  </div>
+</section>
+
 <script>
-let me=null,questions=[],current=1;const $=x=>document.getElementById(x);
-async function api(url,opt={}){let r;try{r=await fetch(url,{credentials:"include",headers:{"Content-Type":"application/json",...(opt.headers||{})},...opt})}catch(e){throw Error("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาลองใหม่อีกครั้ง")}let j=await r.json().catch(()=>({error:"เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง"}));if(!r.ok)throw Error(j.error||"Error");return j}
-async function init(){let j=await api("/api/me");if(j.user){me=j.user;show()}else $("login").classList.remove("hidden")}
-function show(){$("login").classList.add("hidden");$("app").classList.remove("hidden");$("who").textContent=me.username+" ("+me.role+")";load()}
-async function load(){questions=await api("/api/questions");$("qs").innerHTML=questions.map(q=>`<div class="q" id="q${q.id}" onclick="selectQ(${q.id})">ข้อ ${q.id} — ${q.title}</div>`).join("");selectQ(1)}
-async function selectQ(id){current=id;document.querySelectorAll(".q").forEach(x=>x.classList.remove("active"));$("q"+id)?.classList.add("active");let q=await api("/api/questions/"+id);$("title").textContent="ข้อ "+id+": "+q.title;$("problem").textContent=q.body+"\n\nInput\n"+q.input+"\n\nOutput\n"+q.output+"\n\nSample Input\n"+q.sample_in+"\n\nSample Output\n"+q.sample_out+"\n\nคะแนน "+q.score}
-$("lf").onsubmit=async e=>{e.preventDefault();try{let j=await api("/api/login",{method:"POST",body:JSON.stringify({username:$("u").value.trim(),password:$("p").value})});if(!j.user)throw Error("เข้าสู่ระบบไม่สำเร็จ");me=j.user;show()}catch(e){$("le").textContent=e.message}}
-$("logout").onclick=async()=>{await api("/api/logout",{method:"POST"});location.reload()}
-$("file").onchange=e=>{let f=e.target.files[0];if(f){let r=new FileReader();r.onload=()=>{$("code").value=r.result};r.readAsText(f)}}
-$("submit").onclick=async()=>{let b=$("submit");b.disabled=true;b.textContent="กำลัง Compile...";try{let r=await api("/api/submit",{method:"POST",body:JSON.stringify({qid:current,code:$("code").value})});$("result").innerHTML=`<div class="card"><b class="${r.status==="ACCEPTED"?"ok":"bad"}">${r.status}</b><p>คะแนน: <b>${r.score}/10</b></p><p>Test Case: ${r.passed}/${r.total} ผ่าน</p>${r.error?`<pre class="bad">${r.error}</pre>`:""}</div>`}catch(e){$("result").innerHTML='<p class="bad">'+e.message+"</p>"}finally{b.disabled=false;b.textContent="Compile & Submit"}}
-init()
-</script></body></html>
+let me=null,questions=[],current=1;
+const $=x=>document.getElementById(x);
+
+async function api(url,opt={}){
+  let r;
+  try{
+    r=await fetch(url,{credentials:"include",headers:{"Content-Type":"application/json",...(opt.headers||{})},...opt});
+  }catch(e){throw Error("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาลองใหม่อีกครั้ง")}
+  let j=await r.json().catch(()=>({error:"เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง"}));
+  if(!r.ok)throw Error(j.error||"Error");
+  return j;
+}
+
+async function init(){
+  try{
+    const j=await api("/api/me");
+    if(j.user){me=j.user;show()}
+    else $("login").classList.remove("hidden");
+  }catch(e){
+    $("login").classList.remove("hidden");
+    $("le").textContent=e.message;
+  }
+}
+
+function show(){
+  $("login").classList.add("hidden");
+  $("app").classList.remove("hidden");
+  $("who").textContent=me.username;
+  $("roleText").textContent=me.role==="admin"?"Administrator":"Student";
+  $("avatar").textContent=me.username.charAt(0).toUpperCase();
+  load();
+}
+
+function renderProblem(q){
+  $("title").textContent="ข้อ "+q.id+": "+q.title;
+  $("statQuestion").textContent="ข้อ "+q.id;
+  $("statScore").textContent=(q.score||10)+" คะแนน";
+  $("problem").innerHTML="";
+  
+  const lead=document.createElement("div");
+  lead.className="problem-lead";
+  lead.textContent=q.body;
+  $("problem").appendChild(lead);
+
+  const grid=document.createElement("div"); grid.className="spec-grid";
+  [["Input",q.input],["Output",q.output]].forEach(([label,value])=>{
+    const s=document.createElement("div");s.className="spec";
+    const l=document.createElement("label");l.textContent=label;
+    const v=document.createElement("div");v.textContent=value||"-";
+    s.append(l,v);grid.appendChild(s);
+  });
+  $("problem").appendChild(grid);
+
+  const samples=document.createElement("div");samples.className="samples";
+  [["Sample Input",q.sample_in],["Sample Output",q.sample_out]].forEach(([label,value])=>{
+    const s=document.createElement("div");s.className="spec";
+    const l=document.createElement("label");l.textContent=label;
+    const v=document.createElement("div");v.className="mono";v.textContent=value||"-";
+    s.append(l,v);samples.appendChild(s);
+  });
+  $("problem").appendChild(samples);
+}
+
+async function load(){
+  questions=await api("/api/questions");
+  $("progress").textContent="0 / "+questions.length;
+  $("qs").innerHTML=questions.map(q=>'<button class="q" id="q'+q.id+'" onclick="selectQ('+q.id+')"><span class="q-num">'+q.id+'</span><span class="q-info"><b>'+escapeHtml(q.title)+'</b><span>คะแนน '+q.score+'</span></span></button>').join("");
+  selectQ(1);
+}
+
+function escapeHtml(s){
+  return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",""":"&quot;","'":"&#39;"}[c]));
+}
+
+async function selectQ(id){
+  current=id;
+  document.querySelectorAll(".q").forEach(x=>x.classList.remove("active"));
+  $("q"+id)?.classList.add("active");
+  $("progress").textContent=id+" / "+questions.length;
+  $("result").innerHTML="";
+  try{
+    const q=await api("/api/questions/"+id);
+    renderProblem(q);
+    document.body.classList.remove("menu-open");
+  }catch(e){
+    $("result").innerHTML='<p class="bad">'+escapeHtml(e.message)+'</p>';
+  }
+}
+
+$("lf").onsubmit=async e=>{
+  e.preventDefault();
+  const btn=$("loginBtn");
+  btn.disabled=true;btn.textContent="กำลังเข้าสู่ระบบ...";
+  $("le").textContent="";
+  try{
+    const j=await api("/api/login",{method:"POST",body:JSON.stringify({username:$("u").value.trim(),password:$("p").value})});
+    if(!j.user)throw Error("เข้าสู่ระบบไม่สำเร็จ");
+    me=j.user;show();
+  }catch(e){$("le").textContent=e.message}
+  finally{btn.disabled=false;btn.textContent="เข้าสู่ระบบ"}
+};
+
+$("logout").onclick=async()=>{
+  try{await api("/api/logout",{method:"POST"})}finally{location.reload()}
+};
+
+$("uploadBtn").onclick=()=>$("file").click();
+$("file").onchange=e=>{
+  const f=e.target.files[0];
+  if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{$("code").value=r.result};
+  r.readAsText(f);
+};
+
+$("resetBtn").onclick=()=>{
+  $("code").value="#include <stdio.h>\n\nint main(void) {\n    return 0;\n}";
+  $("result").innerHTML="";
+};
+
+$("submit").onclick=async()=>{
+  const b=$("submit");
+  b.disabled=true;b.textContent="⏳ กำลัง Compile...";
+  $("result").innerHTML='<div class="result-card"><span class="muted">กำลัง Compile และตรวจ Test Case...</span></div>';
+  try{
+    const r=await api("/api/submit",{method:"POST",body:JSON.stringify({qid:current,code:$("code").value})});
+    const accepted=r.status==="ACCEPTED";
+    $("result").innerHTML='<div class="result-card">'+
+      '<div class="result-top"><span class="status '+(accepted?"ok":"bad")+'">'+(accepted?"ACCEPTED":"NOT ACCEPTED")+'</span><span class="score-box">'+r.score+'/10</span></div>'+
+      '<div class="result-meta"><span>✓ '+r.passed+' / '+r.total+' Test Case ผ่าน</span><span>• '+escapeHtml(r.status)+'</span></div>'+
+      (r.error?'<pre class="result-error">'+escapeHtml(r.error)+'</pre>':"")+
+      '</div>';
+  }catch(e){
+    $("result").innerHTML='<div class="result-card"><span class="status bad">'+escapeHtml(e.message)+'</span></div>';
+  }finally{b.disabled=false;b.textContent="▶ Compile & Submit"}
+};
+
+$("menuBtn").onclick=()=>document.body.classList.toggle("menu-open");
+init();
+</script>
+</body>
+</html>
