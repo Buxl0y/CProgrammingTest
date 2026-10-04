@@ -49,7 +49,7 @@ class H(BaseHTTPRequestHandler):
    username=str(x.get("username","")).strip().lower(); password=str(x.get("password",""))
    u=c.execute("SELECT * FROM users WHERE lower(username)=?",(username,)).fetchone(); ph=hashlib.sha256(password.encode()).hexdigest()
    if not u or not hmac.compare_digest(u["password"],ph): return send(self,{"error":"ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง"},401)
-   sid=secrets.token_urlsafe(32); SESS[sid]=dict(u); self.send_response(200); self.send_header("Content-Type","application/json"); self.send_header("Set-Cookie",f"sid={sid}; HttpOnly; SameSite=Lax; Path=/"); self.end_headers(); self.wfile.write(json.dumps({"user":dict(u)}).encode()); return
+   sid=secrets.token_urlsafe(32); SESS[sid]=dict(u); b=json.dumps({"user":dict(u)},ensure_ascii=False).encode(); self.send_response(200); self.send_header("Content-Type","application/json; charset=utf-8"); self.send_header("Content-Length",str(len(b))); self.send_header("Set-Cookie",f"sid={sid}; HttpOnly; SameSite=Lax; Path=/"); self.end_headers(); self.wfile.write(b); return
   if p=="/api/logout":
    u=self.user(); s=self.headers.get("Cookie",""); cc=cookies.SimpleCookie(s); t=cc.get("sid"); SESS.pop(t.value,None) if t else None; return send(self,{"ok":1})
   u=self.user()
