@@ -174,12 +174,12 @@ class H(BaseHTTPRequestHandler):
    if mode not in ("practice","timed"):return send(self,{"error":"โหมดไม่ถูกต้อง"},400)
    if mode=="timed" and duration not in (60,90):return send(self,{"error":"เลือกเวลา 60 หรือ 90 นาที"},400)
    guest_username="guest_"+secrets.token_hex(12)
-   c.execute("INSERT INTO users(username,password,role) VALUES(?,?,?)",(guest_username,"","guest"))
-   guest_id=c.lastrowid
+   cur=c.execute("INSERT INTO users(username,password,role) VALUES(?,?,?)",(guest_username,"","guest"))
+   guest_id=cur.lastrowid
    now=int(time.time())
    expires=now+duration*60 if mode=="timed" else 0
-   c.execute("INSERT INTO exam(user_id,participant_name,mode,duration_minutes,started_at,expires_at,status) VALUES(?,?,?,?,?,?,?)",(guest_id,name,mode,duration if mode=="timed" else None,now,expires,"ACTIVE"))
-   eid=c.lastrowid
+   cur=c.execute("INSERT INTO exam(user_id,participant_name,mode,duration_minutes,started_at,expires_at,status) VALUES(?,?,?,?,?,?,?)",(guest_id,name,mode,duration if mode=="timed" else None,now,expires,"ACTIVE"))
+   eid=cur.lastrowid
    c.commit()
    token=self.make_token(guest_username)
    SESS[token]={"id":guest_id,"username":guest_username,"password":"","role":"guest","display_name":name}
