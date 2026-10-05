@@ -125,7 +125,7 @@ radial-gradient(circle at 20% 20%,rgba(79,140,255,.2),transparent 24%)}
       <div class="top-actions">
         <button class="btn top-action" id="historyBtn">ประวัติ</button>
         <button class="btn top-action" id="summaryBtn">สรุปผล</button>
-        <button class="btn top-action" id="modeBtn">เปลี่ยนโหมด</button>
+        <button class="btn top-action danger-btn" id="finishBtn">จบการสอบ</button><button class="btn top-action" id="modeBtn">เปลี่ยนโหมด</button>
       </div>
       <div class="user-name"><span id="who"></span><small id="roleText"></small></div>
       <div class="avatar" id="avatar">S</div>
@@ -282,7 +282,7 @@ async function finishExam(auto=false){
     examLocked=true;
     $("submit").disabled=true;
     $("timerWrap").classList.add("hidden");
-    if(j.exam_id)await showSummary(j.exam_id);
+    await showSummary(j.exam_id || (exam && exam.id));
   }catch(e){
     if(!auto)alert(e.message);
   }
@@ -505,6 +505,7 @@ $("moreTimeBtn").onclick=()=>selectMode("timed",90);
 $("startModeBtn").onclick=startExam;
 $("historyBtn").onclick=showGlobalHistory;
 $("summaryBtn").onclick=()=>showSummary(exam?.id);
+$("finishBtn").onclick=async()=>{if(!exam || examLocked)return;if(confirm("ต้องการจบการสอบตอนนี้หรือไม่? คุณจะส่งโค้ดต่อไม่ได้ในรอบนี้"))await finishExam(false)};
 $("modeBtn").onclick=async()=>{if(exam && !examLocked && !confirm("เริ่มรอบสอบใหม่หรือไม่? รอบปัจจุบันจะสิ้นสุดลง"))return;closeModal("summaryModal");openModal("modeModal")};
 
 $("menuBtn").onclick=()=>document.body.classList.toggle("menu-open");
