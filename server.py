@@ -149,13 +149,34 @@ class H(BaseHTTPRequestHandler):
    if u:
     c.execute("UPDATE exam SET status='ABANDONED',finished_at=? WHERE user_id=? AND status='ACTIVE'",(int(time.time()),u["id"])); c.commit()
    b=json.dumps({"ok":1}).encode(); self.send_response(200); self.send_header("Content-Type","application/json; charset=utf-8"); self.send_header("Content-Length",str(len(b))); self.send_header("Set-Cookie","sid=; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax; Path=/"); self.end_headers(); self.wfile.write(b); return
+  if p=="/api/guest/start":
+   name=" ".join(str(x.get("name","")).strip().split())
+   mode=str(x.get("mode","practice"))
+   duration=int(x.get("duration_minutes",0) or 0)
+   if not name:return send(self,{"error":"กรุณากรอกชื่อ"},400)
+   if len(name)>80:return send(self,{"error":"ชื่อยาวเกิน 80 ตัวอักษร"},400)
+   if mode not in ("practice","timed"):return send(self,{"error":"โหมดไม่ถูกต้อง"},400)
+   if mode=="timed" and duration not in (60,90):return send(self,{"error":"เลือกเวลา 60 หรือ 90 นาที"},400)
+   guest_username="guest_"+secrets.token_hex(12)
+   c.execute("INSERT INTO users(username,password,role) VALUES(?,?,?)",(guest_username,"","guest"))
+   guest_id=c.lastrowid
+   now=int(time.time())
+   expires=now+duration*60 if mode=="timed" else 0
+   c.execute("INSERT INTO exam(user_id,participant_name,mode,duration_minutes,started_at,expires_at,status) VALUES(?,?,?,?,?,?,?)",(guest_id,name,mode,duration if mode=="timed" else None,now,expires,"ACTIVE"))
+   eid=c.lastrowid
+   c.commit()
+   token=self.make_token(guest_username)
+   SESS[token]={"id":guest_id,"username":guest_username,"password":"","role":"guest","display_name":name}
+   row=c.execute("SELECT * FROM exam WHERE id=?",(eid,)).fetchone()
+   b=json.dumps({"user":{"id":guest_id,"username":name,"role":"guest","display_name":name},"token":token,"exam":dict(row)},ensure_ascii=False).encode()
+   self.send_response(200); self.send_header("Content-Type","application/json; charset=utf-8"); self.send_header("Content-Length",str(len(b))); self.send_header("Set-Cookie",f"sid={token}; HttpOnly; SameSite=Lax; Path=/"); self.end_headers(); self.wfile.write(b); return
   u=self.user()
   if not u:return send(self,{"error":"login"},401)
   if p=="/api/exam/start":
    mode=str(x.get("mode","practice"))
    duration=int(x.get("duration_minutes",60) or 60)
    if mode not in ("practice","timed"): return send(self,{"error":"invalid mode"},400)
-   if mode=="timed" and duration not in (30,60,90): return send(self,{"error":"เลือกเวลา 30, 60 หรือ 90 นาที"},400)
+   if mode=="timed" and duration not in (60,90): return send(self,{"error":"เลือกเวลา 60 หรือ 90 นาที"},400)
    now=int(time.time())
    c.execute("UPDATE exam SET status='ABANDONED',finished_at=? WHERE user_id=? AND status='ACTIVE'",(now,u["id"]))
    expires=now+duration*60 if mode=="timed" else 0
