@@ -2,7 +2,7 @@ import os,sqlite3,secrets,hashlib,hmac,json,tempfile,subprocess,base64,time,thre
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from http import cookies
-BASE=Path(__file__).parent; DB=BASE/"data.db"; WEB=BASE/"index.html"; SESS={}; SESSION_SECRET=os.getenv("SESSION_SECRET","codinglab-demo-secret-change-in-render"); DB_INIT_LOCK=threading.Lock(); DB_READY=False
+BASE=Path(__file__).parent; DB=BASE/"data.db"; WEB=BASE/"index.html"; ADMIN_WEB=BASE/"admin.html"; SESS={}; SESSION_SECRET=os.getenv("SESSION_SECRET","codinglab-demo-secret-change-in-render"); DB_INIT_LOCK=threading.Lock(); DB_READY=False
 TEST_CASES={
 1:[["PUBLIC","5 10","15"],["PUBLIC","0 0","0"],["PUBLIC","-5 12","7"],["PUBLIC","123 456","579"],["PUBLIC","-10 -20","-30"],["HIDDEN","1 999","1000"],["HIDDEN","10000 25000","35000"],["HIDDEN","7 -3","4"],["HIDDEN","-100 250","150"],["HIDDEN","999999 1","1000000"]],
 2:[["PUBLIC","0","EVEN"],["PUBLIC","1","ODD"],["PUBLIC","2","EVEN"],["PUBLIC","-1","ODD"],["PUBLIC","-2","EVEN"],["HIDDEN","100","EVEN"],["HIDDEN","101","ODD"],["HIDDEN","999","ODD"],["HIDDEN","1000","EVEN"],["HIDDEN","12345","ODD"]],
@@ -108,6 +108,9 @@ class H(BaseHTTPRequestHandler):
  def do_GET(self):
   if self.path=="/" or self.path=="/index.html":
    b=WEB.read_bytes(); self.send_response(200); self.send_header("Content-Type","text/html; charset=utf-8"); self.send_header("Content-Length",str(len(b))); self.end_headers(); self.wfile.write(b); return
+  if self.path=="/admin" or self.path=="/admin/":
+   if not ADMIN_WEB.exists(): return send(self,{"error":"admin page not found"},404)
+   b=ADMIN_WEB.read_bytes(); self.send_response(200); self.send_header("Content-Type","text/html; charset=utf-8"); self.send_header("Content-Length",str(len(b))); self.end_headers(); self.wfile.write(b); return
   u=self.user(); c=db()
   if self.path=="/api/me":
    if not u:return send(self,{"user":None})
@@ -150,6 +153,49 @@ class H(BaseHTTPRequestHandler):
   if self.path=="/api/submissions":
    rows=c.execute("SELECT sub.id,sub.qid,q.title,sub.status,sub.score,sub.passed,sub.total,sub.created,sub.exam_id,exam.mode,exam.duration_minutes,exam.participant_name FROM sub JOIN q ON q.id=sub.qid LEFT JOIN exam ON exam.id=sub.exam_id WHERE sub.user_id=? ORDER BY sub.id DESC LIMIT 200",(u["id"],)).fetchall()
    return send(self,[dict(r) for r in rows])
+  if self.path=="/api/admin/exams" and u["role"]=="admin":
+   rows=c.execute("""
+    SELECT e.id,e.participant_name,e.mode,e.duration_minutes,e.started_at,e.expires_at,e.finished_at,e.status,e.created,
+           COALESCE(SUM(s.score),0) AS total_score,
+           COALESCE(MAX(q_tot.max_score),0) AS ignored,
+           COUNT(DISTINCT s.qid) AS solved
+    FROM exam e
+    LEFT JOIN sub s ON s.exam_id=e.id
+    LEFT JOIN (
+      SELECT id, score AS max_score FROM q
+    ) q_tot ON q_tot.id=s.qid
+    GROUP BY e.id
+    ORDER BY e.id DESC
+    LIMIT 500
+   """).fetchall()
+   out=[]
+   for r in rows:
+    item=dict(r)
+    max_score=c.execute("SELECT COALESCE(SUM(score),0) FROM q").fetchone()[0] or 0
+    item["max_score"]=float(max_score)
+    item.pop("ignored",None)
+    out.append(item)
+   return send(self,out)
+  if self.path.startswith("/api/admin/exams/") and u["role"]=="admin":
+   try:eid=int(self.path.rsplit("/",1)[1])
+   except Exception:return send(self,{"error":"invalid exam id"},400)
+   ex=c.execute("SELECT * FROM exam WHERE id=?",(eid,)).fetchone()
+   if not ex:return send(self,{"error":"exam not found"},404)
+   rows=c.execute("""
+    SELECT s.*,q.title,q.score AS max_score
+    FROM sub s JOIN q ON q.id=s.qid
+    WHERE s.exam_id=?
+    ORDER BY s.id ASC
+   """,(eid,)).fetchall()
+   subs=[]
+   for r in rows:
+    item=dict(r)
+    try:item["details"]=json.loads(item.get("details") or "[]")
+    except Exception:item["details"]=[]
+    subs.append(item)
+   total=sum(float(x["score"] or 0) for x in subs)
+   max_total=sum(float(x["max_score"] or 0) for x in subs) if subs else sum(float(q["score"] or 0) for q in c.execute("SELECT score FROM q").fetchall())
+   return send(self,{"exam":dict(ex),"total_score":round(total,2),"max_score":round(max_total,2),"submissions":subs})
   if self.path=="/api/admin/submissions" and u["role"]=="admin":
    return send(self,[dict(x) for x in c.execute("SELECT sub.*,users.username FROM sub JOIN users ON users.id=sub.user_id ORDER BY sub.id DESC LIMIT 100")])
   return send(self,{"error":"not found"},404)
@@ -165,6 +211,13 @@ class H(BaseHTTPRequestHandler):
    if u:
     c.execute("UPDATE exam SET status='ABANDONED',finished_at=? WHERE user_id=? AND status='ACTIVE'",(int(time.time()),u["id"])); c.commit()
    b=json.dumps({"ok":1}).encode(); self.send_response(200); self.send_header("Content-Type","application/json; charset=utf-8"); self.send_header("Content-Length",str(len(b))); self.send_header("Set-Cookie","sid=; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax; Path=/"); self.end_headers(); self.wfile.write(b); return
+  if p=="/api/admin/login":
+   username=str(x.get("username","")).strip().lower(); password=str(x.get("password",""))
+   u=c.execute("SELECT * FROM users WHERE lower(username)=? AND role='admin'",(username,)).fetchone()
+   ph=hashlib.sha256(password.encode()).hexdigest()
+   if not u or not hmac.compare_digest(u["password"],ph): return send(self,{"error":"ชื่อผู้ใช้หรือรหัสผ่าน Admin ไม่ถูกต้อง"},401)
+   token=self.make_token(u["username"])
+   return send(self,{"user":dict(u),"token":token})
   if p=="/api/guest/start":
    name=" ".join(str(x.get("name","")).strip().split())
    mode=str(x.get("mode","practice"))
