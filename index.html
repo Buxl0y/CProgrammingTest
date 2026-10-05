@@ -267,26 +267,28 @@ async function loadExamState(){
 }
 
 async function startExam(){
-  const btn=$("startModeBtn")||$("loginBtn");
+  const guest=!me;
+  const btn=guest?$("loginBtn"):$("startModeBtn");
+  const errorEl=guest?$("le"):$("modeError");
   btn.disabled=true;btn.textContent="กำลังเริ่ม...";
-  $("modeError").textContent="";
-  $("le").textContent="";
+  errorEl.textContent="";
   try{
     const name=$("u")?.value.trim()||me?.display_name||"";
-    if(!me && !name)throw Error("กรุณากรอกชื่อ");
-    const endpoint=me?"/api/exam/start":"/api/guest/start";
+    if(guest && !name)throw Error("กรุณากรอกชื่อ");
+    const endpoint=guest?"/api/guest/start":"/api/exam/start";
     const body={mode:selectedMode,duration_minutes:selectedMinutes||60};
-    if(!me)body.name=name;
+    if(guest)body.name=name;
     const j=await api(endpoint,{method:"POST",body:JSON.stringify(body)});
-    me=j.user;localStorage.setItem("codinglab_token",j.token||localStorage.getItem("codinglab_token")||"");
+    me=j.user;
+    localStorage.setItem("codinglab_token",j.token);
     exam=j.exam;examLocked=false;
-    if(!$("app").classList.contains("hidden")){} else show();
+    if($("app").classList.contains("hidden"))show();
     $("modePill").textContent=exam.mode==="timed"?"⏱ จับเวลา "+exam.duration_minutes+" นาที":"🧩 ทำแบบฝึกหัด";
     startTimer(j.remaining_seconds||0);
     closeModal("modeModal");
   }catch(e){
-    ($("modeError")||$("le")).textContent=e.message;
-  }finally{btn.disabled=false;btn.textContent=btn.id==="loginBtn"?"เริ่มทำแบบทดสอบ":"เริ่มการสอบ"}
+    errorEl.textContent=e.message;
+  }finally{btn.disabled=false;btn.textContent=guest?"เริ่มทำแบบทดสอบ":"เริ่มการสอบ"}
 }
 
 async function finishExam(auto=false){
@@ -308,6 +310,7 @@ async function showSummary(examId,finalResult=false){
     const j=await api("/api/summary/"+examId);
     const mode=j.exam.mode==="timed"?"จับเวลา "+j.exam.duration_minutes+" นาที":"ฝึกทำโจทย์";
     $("summaryContent").innerHTML=
+      '<div style="margin-bottom:14px;color:#b7c7df;font-weight:700">ผู้ทำแบบทดสอบ: '+escapeHtml(j.participant_name||"")+'</div>'+
       '<div class="summary-total">'+
       '<div class="summary-kpi"><small>คะแนนรวม</small><strong>'+j.total_score+' / '+j.max_score+'</strong></div>'+
       '<div class="summary-kpi"><small>ทำแล้ว</small><strong>'+j.solved+' / '+j.questions.length+' ข้อ</strong></div>'+
