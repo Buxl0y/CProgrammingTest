@@ -57,25 +57,31 @@ radial-gradient(circle at 20% 20%,rgba(79,140,255,.2),transparent 24%)}
     <div class="login-brand">
       <span class="brand-badge">● ONLINE JUDGE • C LANGUAGE</span>
       <div class="logo"><div class="logo-mark">⌘</div><div><strong>CodingLab</strong><div class="muted" style="font-size:12px">Programming Assessment</div></div></div>
-      <h1>เขียน C<br>ให้ผ่านทุก Test Case</h1>
-      <p>แพลตฟอร์มทดสอบการเขียนโปรแกรมภาษา C พร้อม Compiler และระบบตรวจคำตอบแบบอัตโนมัติ</p>
+      <h1>พร้อมแล้วเริ่มทำ<br>แบบทดสอบได้เลย</h1>
+      <p>ไม่ต้องสมัครสมาชิก ไม่ต้องใช้รหัสผ่าน เพียงกรอกชื่อแล้วเลือกโหมดที่ต้องการ</p>
       <div class="feature-list">
-        <div class="feature"><span class="feature-icon">✓</span><span>Compile และ Run โค้ดได้ทันที</span></div>
-        <div class="feature"><span class="feature-icon">✓</span><span>ตรวจสอบหลาย Test Case พร้อมคำนวณคะแนน</span></div>
-        <div class="feature"><span class="feature-icon">✓</span><span>ใช้งานได้ทั้งคอมพิวเตอร์และมือถือ</span></div>
+        <div class="feature"><span class="feature-icon">✓</span><span>Compile และ Run โค้ด C ได้ทันที</span></div>
+        <div class="feature"><span class="feature-icon">✓</span><span>ตรวจ 10 Test Case พร้อมคะแนน</span></div>
+        <div class="feature"><span class="feature-icon">✓</span><span>ระบบเก็บประวัติการทำไว้ใน Backend</span></div>
       </div>
     </div>
     <div class="login-form">
       <div class="login-card">
-        <h2>ยินดีต้อนรับ 👋</h2>
-        <p class="sub">เข้าสู่ระบบเพื่อเริ่มทำข้อสอบเขียนโปรแกรม</p>
+        <h2>เริ่มทำแบบทดสอบ 👋</h2>
+        <p class="sub">กรอกชื่อที่ต้องการให้แสดงในผลสอบ</p>
         <form id="lf">
-          <div class="field"><label for="u">USERNAME</label><input id="u" autocomplete="username" placeholder="กรอก Username"></div>
-          <div class="field"><label for="p">PASSWORD</label><input id="p" type="password" autocomplete="current-password" placeholder="กรอก Password"></div>
-          <button class="login-btn" id="loginBtn">เข้าสู่ระบบ</button>
+          <div class="field"><label for="u">ชื่อผู้ทำแบบทดสอบ</label><input id="u" maxlength="80" autocomplete="name" placeholder="เช่น สมชาย ใจดี" required></div>
+          <div class="field">
+            <label>เลือกโหมด</label>
+            <div class="mode-options" style="grid-template-columns:1fr">
+              <button type="button" class="mode-option selected" data-mode="practice" data-minutes="0"><strong>🧩 ทำแบบฝึกหัด</strong><span>ไม่จับเวลา</span></button>
+              <button type="button" class="mode-option" data-mode="timed" data-minutes="60"><strong>⏱ สอบ 60 นาที</strong><span>เหมาะสำหรับการสอบมาตรฐาน</span></button>
+              <button type="button" class="mode-option" data-mode="timed" data-minutes="90"><strong>⏱ สอบ 90 นาที</strong><span>เหมาะสำหรับการสอบที่มีหลายโจทย์</span></button>
+            </div>
+          </div>
+          <button class="login-btn" id="loginBtn">เริ่มทำแบบทดสอบ</button>
         </form>
         <p id="le" class="error"></p>
-        <div class="demo"><b>บัญชีสำหรับทดสอบ</b><br><span class="mono">student</span> / <span class="mono">student123</span><br><span class="mono">admin</span> / <span class="mono">admin123</span></div>
       </div>
     </div>
   </div>
@@ -84,15 +90,13 @@ radial-gradient(circle at 20% 20%,rgba(79,140,255,.2),transparent 24%)}
 <div id="modeModal" class="modal hidden">
   <div class="mode-card">
     <div class="modal-head">
-      <div><h3>เลือกโหมดการสอบ</h3><p class="exam-note">เลือกโหมดก่อนเริ่มทำข้อสอบ รอบสอบใหม่จะเริ่มนับเวลาทันทีเมื่อกดเริ่ม</p></div>
+      <div><h3>เลือกโหมดการสอบ</h3><p class="exam-note">การเปลี่ยนโหมดจะเริ่มรอบสอบใหม่ หากมีรอบเดิมอยู่</p></div>
+      <button class="close-btn" onclick="closeModal('modeModal')">×</button>
     </div>
     <div class="mode-options" id="modeOptions">
-      <button class="mode-option selected" data-mode="practice" data-minutes="0"><strong>🧩 ฝึกทำโจทย์</strong><span>ไม่จับเวลา สามารถฝึกและส่งใหม่ได้เรื่อย ๆ</span></button>
-      <button class="mode-option" data-mode="timed" data-minutes="30"><strong>⚡ สอบ 30 นาที</strong><span>เหมาะสำหรับการสอบสั้น ๆ และจำกัดเวลา</span></button>
-      <button class="mode-option" data-mode="timed" data-minutes="60"><strong>⏱ สอบ 60 นาที</strong><span>โหมดมาตรฐานสำหรับการสอบ 10 ข้อ</span></button>
-    </div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:10px">
-      <button class="btn top-action" id="moreTimeBtn">ใช้ 90 นาที</button>
+      <button type="button" class="mode-option selected" data-mode="practice" data-minutes="0"><strong>🧩 ทำแบบฝึกหัด</strong><span>ไม่จับเวลา</span></button>
+      <button type="button" class="mode-option" data-mode="timed" data-minutes="60"><strong>⏱ สอบ 60 นาที</strong><span>จับเวลาจาก Server</span></button>
+      <button type="button" class="mode-option" data-mode="timed" data-minutes="90"><strong>⏱ สอบ 90 นาที</strong><span>จับเวลาจาก Server</span></button>
     </div>
     <button class="mode-start" id="startModeBtn">เริ่มการสอบ</button>
     <p id="modeError" class="error"></p>
@@ -101,7 +105,7 @@ radial-gradient(circle at 20% 20%,rgba(79,140,255,.2),transparent 24%)}
 
 <div id="summaryModal" class="modal hidden">
   <div class="modal-box">
-    <div class="modal-head"><div><h3>สรุปผลการสอบ</h3><p class="exam-note">คะแนนล่าสุดของแต่ละข้อในรอบสอบปัจจุบัน</p></div><button class="close-btn" onclick="closeModal('summaryModal')">×</button></div>
+    <div class="modal-head"><div><h3>สรุปผลการสอบ</h3><p class="exam-note">ผลการทำแบบทดสอบของคุณถูกบันทึกไว้ใน Backend แล้ว</p></div><button class="close-btn" id="summaryClose">×</button></div>
     <div id="summaryContent"></div>
   </div>
 </div>
@@ -263,16 +267,26 @@ async function loadExamState(){
 }
 
 async function startExam(){
-  const btn=$("startModeBtn");btn.disabled=true;btn.textContent="กำลังเริ่ม...";
+  const btn=$("startModeBtn")||$("loginBtn");
+  btn.disabled=true;btn.textContent="กำลังเริ่ม...";
   $("modeError").textContent="";
+  $("le").textContent="";
   try{
-    const j=await api("/api/exam/start",{method:"POST",body:JSON.stringify({mode:selectedMode,duration_minutes:selectedMinutes||60})});
+    const name=$("u")?.value.trim()||me?.display_name||"";
+    if(!me && !name)throw Error("กรุณากรอกชื่อ");
+    const endpoint=me?"/api/exam/start":"/api/guest/start";
+    const body={mode:selectedMode,duration_minutes:selectedMinutes||60};
+    if(!me)body.name=name;
+    const j=await api(endpoint,{method:"POST",body:JSON.stringify(body)});
+    me=j.user;localStorage.setItem("codinglab_token",j.token||localStorage.getItem("codinglab_token")||"");
     exam=j.exam;examLocked=false;
-    $("modePill").textContent=exam.mode==="timed"?"⏱ จับเวลา "+exam.duration_minutes+" นาที":"🧩 ฝึกทำโจทย์";
+    if(!$("app").classList.contains("hidden")){} else show();
+    $("modePill").textContent=exam.mode==="timed"?"⏱ จับเวลา "+exam.duration_minutes+" นาที":"🧩 ทำแบบฝึกหัด";
     startTimer(j.remaining_seconds||0);
     closeModal("modeModal");
-  }catch(e){$("modeError").textContent=e.message}
-  finally{btn.disabled=false;btn.textContent="เริ่มการสอบ"}
+  }catch(e){
+    ($("modeError")||$("le")).textContent=e.message;
+  }finally{btn.disabled=false;btn.textContent=btn.id==="loginBtn"?"เริ่มทำแบบทดสอบ":"เริ่มการสอบ"}
 }
 
 async function finishExam(auto=false){
@@ -282,13 +296,13 @@ async function finishExam(auto=false){
     examLocked=true;
     $("submit").disabled=true;
     $("timerWrap").classList.add("hidden");
-    await showSummary(j.exam_id || (exam && exam.id));
+    await showSummary(j.exam_id || (exam && exam.id),true);
   }catch(e){
     if(!auto)alert(e.message);
   }
 }
 
-async function showSummary(examId){
+async function showSummary(examId,finalResult=false){
   if(!examId){if(!exam)return;examId=exam.id}
   try{
     const j=await api("/api/summary/"+examId);
@@ -304,10 +318,27 @@ async function showSummary(examId){
         return '<tr><td>'+x.qid+'</td><td>'+escapeHtml(x.title)+'</td><td class="'+cls+'">'+x.score+'/'+x.max_score+'</td><td>'+x.passed+'/'+x.test_total+'</td><td>'+escapeHtml(x.status)+'</td></tr>';
       }).join("")+
       '</tbody></table></div>';
+    $("summaryClose").onclick=finalResult?returnToStart:()=>closeModal("summaryModal");
+    if(finalResult){
+      $("app").classList.add("hidden");
+      clearInterval(timerHandle);
+      try{await fetch("/api/logout",{method:"POST",credentials:"include"})}catch(_){}
+      localStorage.removeItem("codinglab_token");
+      me=null;exam=null;examLocked=true;
+      $("summaryClose").textContent="กลับหน้าเริ่มต้น";
+    }
     openModal("summaryModal");
   }catch(e){$("summaryContent").innerHTML='<div class="history-empty">'+escapeHtml(e.message)+'</div>';openModal("summaryModal")}
 }
 
+function returnToStart(){
+  closeModal("summaryModal");
+  $("login").classList.remove("hidden");
+  $("u").value="";
+  $("le").textContent="";
+  selectedMode="practice";selectedMinutes=0;
+  document.querySelectorAll("#login .mode-option").forEach(x=>x.classList.toggle("selected",x.dataset.mode==="practice"));
+}
 async function showGlobalHistory(){
   try{
     const rows=await api("/api/submissions");
@@ -321,22 +352,25 @@ async function showGlobalHistory(){
 }
 
 async function init(){
+  const token=localStorage.getItem("codinglab_token");
+  if(!token){$("login").classList.remove("hidden");return}
   try{
     const j=await api("/api/me");
     if(j.user){me=j.user;show()}
-    else {localStorage.removeItem("codinglab_token");$("login").classList.remove("hidden");}
+    else{localStorage.removeItem("codinglab_token");$("login").classList.remove("hidden")}
   }catch(e){
+    localStorage.removeItem("codinglab_token");
     $("login").classList.remove("hidden");
-    $("le").textContent=e.message;
+    $("le").textContent="";
   }
 }
 
 function show(){
   $("login").classList.add("hidden");
   $("app").classList.remove("hidden");
-  $("who").textContent=me.username;
-  $("roleText").textContent=me.role==="admin"?"Administrator":"Student";
-  $("avatar").textContent=me.username.charAt(0).toUpperCase();
+  $("who").textContent=me.display_name||me.username;
+  $("roleText").textContent=me.role==="admin"?"Administrator":"Participant";
+  $("avatar").textContent=(me.display_name||me.username).charAt(0).toUpperCase();
   load();
   loadExamState();
 }
@@ -452,15 +486,7 @@ async function selectQ(id){
 
 $("lf").onsubmit=async e=>{
   e.preventDefault();
-  const btn=$("loginBtn");
-  btn.disabled=true;btn.textContent="กำลังเข้าสู่ระบบ...";
-  $("le").textContent="";
-  try{
-    const j=await api("/api/login",{method:"POST",body:JSON.stringify({username:$("u").value.trim(),password:$("p").value})});
-    if(!j.user)throw Error("เข้าสู่ระบบไม่สำเร็จ");
-    me=j.user;localStorage.setItem("codinglab_token",j.token||"");show();
-  }catch(e){$("le").textContent=e.message}
-  finally{btn.disabled=false;btn.textContent="เข้าสู่ระบบ"}
+  await startExam();
 };
 
 $("logout").onclick=async()=>{
@@ -501,12 +527,11 @@ $("submit").onclick=async()=>{ if(examLocked){$("result").innerHTML='<div class=
 };
 
 document.querySelectorAll(".mode-option").forEach(x=>x.onclick=()=>selectMode(x.dataset.mode,Number(x.dataset.minutes)));
-$("moreTimeBtn").onclick=()=>selectMode("timed",90);
 $("startModeBtn").onclick=startExam;
 $("historyBtn").onclick=showGlobalHistory;
 $("summaryBtn").onclick=()=>showSummary(exam?.id);
 $("finishBtn").onclick=async()=>{if(!exam || examLocked)return;if(confirm("ต้องการจบการสอบตอนนี้หรือไม่? คุณจะส่งโค้ดต่อไม่ได้ในรอบนี้"))await finishExam(false)};
-$("modeBtn").onclick=async()=>{if(exam && !examLocked && !confirm("เริ่มรอบสอบใหม่หรือไม่? รอบปัจจุบันจะสิ้นสุดลง"))return;closeModal("summaryModal");openModal("modeModal")};
+$("modeBtn").onclick=async()=>{if(exam && !examLocked && !confirm("เริ่มรอบสอบใหม่หรือไม่? รอบปัจจุบันจะสิ้นสุดลง"))return;openModal("modeModal")};
 
 $("menuBtn").onclick=()=>document.body.classList.toggle("menu-open");
 init();
