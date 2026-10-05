@@ -179,9 +179,10 @@ class H(BaseHTTPRequestHandler):
    if mode not in ("practice","timed"): return send(self,{"error":"invalid mode"},400)
    if mode=="timed" and duration not in (60,90): return send(self,{"error":"เลือกเวลา 60 หรือ 90 นาที"},400)
    now=int(time.time())
+   active_name=c.execute("SELECT participant_name FROM exam WHERE user_id=? AND status='ACTIVE' ORDER BY id DESC LIMIT 1",(u["id"],)).fetchone()
+   pname=active_name["participant_name"] if active_name and active_name["participant_name"] else u.get("display_name") or u.get("username")
    c.execute("UPDATE exam SET status='ABANDONED',finished_at=? WHERE user_id=? AND status='ACTIVE'",(now,u["id"]))
    expires=now+duration*60 if mode=="timed" else 0
-   pname=u.get("display_name") or u.get("username")
    c.execute("INSERT INTO exam(user_id,participant_name,mode,duration_minutes,started_at,expires_at,status) VALUES(?,?,?,?,?,?,?)",(u["id"],pname,mode,duration if mode=="timed" else None,now,expires,"ACTIVE"))
    c.commit()
    row=c.execute("SELECT * FROM exam WHERE id=last_insert_rowid()").fetchone()
