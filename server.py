@@ -43,8 +43,9 @@ def db():
    c.execute("INSERT INTO q VALUES(?,?,?,?,?,?,?,?)",(i,*x,10))
    c.execute("INSERT INTO tc(qid,kind,input,expected,weight) VALUES(?,?,?,?,1)",(i,"PUBLIC",x[4],x[5]))
    c.execute("INSERT INTO tc(qid,kind,input,expected,weight) VALUES(?,?,?,?,1)",(i,"HIDDEN",x[4]+"\n",x[5]+"\n"))
-  ensure_test_data(c)
-  return c
+  c.commit()
+ ensure_test_data(c)
+ return c
 def send(h,obj,code=200):
  b=json.dumps(obj,ensure_ascii=False).encode(); h.send_response(code); h.send_header("Content-Type","application/json; charset=utf-8"); h.send_header("Content-Length",str(len(b))); h.end_headers(); h.wfile.write(b)
 class H(BaseHTTPRequestHandler):
