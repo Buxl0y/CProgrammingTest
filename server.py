@@ -1,8 +1,8 @@
-import os,sqlite3,secrets,hashlib,hmac,json,tempfile,subprocess,base64,time
+import os,sqlite3,secrets,hashlib,hmac,json,tempfile,subprocess,base64,time,threading
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from http import cookies
-BASE=Path(__file__).parent; DB=BASE/"data.db"; WEB=BASE/"index.html"; SESS={}; SESSION_SECRET=os.getenv("SESSION_SECRET","codinglab-demo-secret-change-in-render")
+BASE=Path(__file__).parent; DB=BASE/"data.db"; WEB=BASE/"index.html"; SESS={}; SESSION_SECRET=os.getenv("SESSION_SECRET","codinglab-demo-secret-change-in-render"); DB_INIT_LOCK=threading.Lock(); DB_READY=False
 TEST_CASES={
 1:[["PUBLIC","5 10","15"],["PUBLIC","0 0","0"],["PUBLIC","-5 12","7"],["PUBLIC","123 456","579"],["PUBLIC","-10 -20","-30"],["HIDDEN","1 999","1000"],["HIDDEN","10000 25000","35000"],["HIDDEN","7 -3","4"],["HIDDEN","-100 250","150"],["HIDDEN","999999 1","1000000"]],
 2:[["PUBLIC","0","EVEN"],["PUBLIC","1","ODD"],["PUBLIC","2","EVEN"],["PUBLIC","-1","ODD"],["PUBLIC","-2","EVEN"],["HIDDEN","100","EVEN"],["HIDDEN","101","ODD"],["HIDDEN","999","ODD"],["HIDDEN","1000","EVEN"],["HIDDEN","12345","ODD"]],
@@ -30,7 +30,7 @@ def ensure_test_data(c):
  c.commit()
 
 def db():
- DB.parent.mkdir(exist_ok=True); c=sqlite3.connect(DB); c.row_factory=sqlite3.Row
+ global DB_READY\n DB.parent.mkdir(exist_ok=True); c=sqlite3.connect(DB,timeout=30); c.row_factory=sqlite3.Row\n c.execute("PRAGMA busy_timeout=30000")\n if not DB_READY:\n  with DB_INIT_LOCK:\n   if not DB_READY:\n    c.execute("PRAGMA journal_mode=WAL")\n    c.execute("PRAGMA synchronous=NORMAL")
  c.execute("CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY,username TEXT UNIQUE,password TEXT,role TEXT)")
  c.execute("CREATE TABLE IF NOT EXISTS q(id INTEGER PRIMARY KEY,title TEXT,body TEXT,input TEXT,output TEXT,sample_in TEXT,sample_out TEXT,score INTEGER)")
  c.execute("CREATE TABLE IF NOT EXISTS tc(id INTEGER PRIMARY KEY,qid INTEGER,kind TEXT,input TEXT,expected TEXT,weight REAL)")
