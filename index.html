@@ -43,11 +43,11 @@ radial-gradient(circle at 20% 20%,rgba(79,140,255,.2),transparent 24%)}
 .code-area{padding:0 18px 18px}.editor-wrap{position:relative}.editor{width:100%;height:465px;display:block;resize:vertical;padding:18px 18px 18px 50px;border-radius:14px;border:1px solid #223550;outline:none;background:#06101c;color:#dce9fb;line-height:1.65;font-size:13px;font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace;tab-size:4;box-shadow:inset 0 0 35px rgba(0,0,0,.18)}.editor:focus{border-color:rgba(79,140,255,.55);box-shadow:0 0 0 3px rgba(79,140,255,.08),inset 0 0 35px rgba(0,0,0,.18)}.line-mark{position:absolute;left:14px;top:18px;bottom:18px;color:#3a4b64;font:13px/1.65 monospace;pointer-events:none;user-select:none}
 .toolbar{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-top:12px}.toolbar-left{display:flex;gap:8px}.btn{height:42px;padding:0 14px;border-radius:11px;border:1px solid #263752;color:#c7d4e8;background:#0a1727}.btn:hover{background:#102035;color:#fff}.btn-primary{border:0;background:linear-gradient(135deg,var(--primary),var(--primary2));color:white;font-weight:700;padding:0 18px;box-shadow:0 10px 24px rgba(79,140,255,.16)}.btn-primary:disabled{opacity:.6;cursor:wait}
 .result{margin-top:14px}.result-card{padding:15px;border-radius:14px;border:1px solid rgba(133,157,198,.12);background:#091624}.result-top{display:flex;justify-content:space-between;align-items:center}.status{display:inline-flex;align-items:center;gap:7px;font-weight:800;font-size:12px}.status::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 12px currentColor}.ok{color:var(--green)}.bad{color:var(--red)}.score-box{font-size:19px;font-weight:800}.result-meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;color:#91a1b9;font-size:12px}.result-error{margin:12px 0 0;padding:10px;border-radius:9px;background:rgba(255,107,129,.06);border:1px solid rgba(255,107,129,.13);white-space:pre-wrap;overflow:auto;font:11px/1.55 monospace;color:#ff9bab}
-.mobile-menu{display:none}
+.case-list{display:grid;gap:8px;margin-top:14px}.case{border:1px solid rgba(133,157,198,.12);border-radius:12px;background:#081421;overflow:hidden}.case summary{list-style:none;cursor:pointer;padding:12px 13px;display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12px}.case summary::-webkit-details-marker{display:none}.case summary:hover{background:rgba(255,255,255,.025)}.case-main{display:flex;align-items:center;gap:9px}.case-dot{width:8px;height:8px;border-radius:50%;background:#596a82}.case-pass .case-dot{background:var(--green);box-shadow:0 0 10px rgba(57,211,153,.45)}.case-fail .case-dot{background:var(--red);box-shadow:0 0 10px rgba(255,107,129,.4)}.case-skip .case-dot{background:var(--orange)}.case-label{font-weight:700}.case-badge{font-size:10px;padding:4px 7px;border-radius:999px}.case-pass .case-badge{background:rgba(57,211,153,.09);color:var(--green)}.case-fail .case-badge{background:rgba(255,107,129,.09);color:var(--red)}.case-skip .case-badge{background:rgba(255,189,102,.09);color:var(--orange)}.case-body{padding:0 13px 13px;border-top:1px solid rgba(133,157,198,.08)}.case-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:11px}.case-box{min-width:0}.case-box label{display:block;font-size:9px;color:#6e819d;text-transform:uppercase;letter-spacing:.7px;margin-bottom:5px}.case-box pre{margin:0;min-height:42px;padding:9px;border-radius:9px;background:#06101b;border:1px solid rgba(133,157,198,.1);white-space:pre-wrap;word-break:break-word;overflow:auto;font:11px/1.5 "SFMono-Regular",Consolas,monospace;color:#dce7f7}.history{margin-top:16px}.history-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.history-head h4{margin:0;font-size:13px}.history-empty{padding:15px;border:1px dashed #263752;border-radius:12px;color:#6f8099;font-size:12px;text-align:center}.history-list{display:grid;gap:8px}.history-item{border:1px solid rgba(133,157,198,.12);border-radius:12px;background:#091624;overflow:hidden}.history-item summary{list-style:none;cursor:pointer;padding:12px 13px}.history-item summary::-webkit-details-marker{display:none}.history-summary{display:grid;grid-template-columns:70px 1fr auto;align-items:center;gap:10px}.history-id{color:#71849e;font-size:11px}.history-date{font-size:11px;color:#b7c6da}.history-score{font-weight:800;font-size:14px}.history-score.pass{color:var(--green)}.history-score.partial{color:var(--orange)}.history-score.fail{color:var(--red)}.history-detail{padding:0 13px 13px;border-top:1px solid rgba(133,157,198,.08)}.test-count{font-size:11px;color:#91a1b9;margin-top:10px}.history-error{margin:10px 0 0;padding:9px;border-radius:8px;background:rgba(255,107,129,.05);color:#ff9bab;font:10px/1.5 monospace;white-space:pre-wrap}.case-box.actual pre.passout{border-color:rgba(57,211,153,.22)}.case-box.actual pre.failout{border-color:rgba(255,107,129,.22)}.mobile-menu{display:none}
 .footer-note{margin-top:14px;color:#56677f;font-size:11px;text-align:right}
 @media(max-width:1100px){.login-shell{grid-template-columns:1fr}.login-brand{display:none}.work-grid{grid-template-columns:1fr}}
 @media(max-width:800px){.mobile-menu{display:inline-flex}.layout{grid-template-columns:1fr}.sidebar{position:fixed;left:0;top:72px;bottom:0;width:270px;z-index:15;transform:translateX(-105%);transition:.2s;box-shadow:20px 0 50px rgba(0,0,0,.35)}body.menu-open .sidebar{transform:translateX(0)}.main{padding:16px}.stats{grid-template-columns:1fr 1fr}.user-name{display:none}.topbar{padding:0 14px}.welcome{display:block}.samples{grid-template-columns:1fr}}
-@media(max-width:560px){.login-page{padding:14px}.login-form{padding:28px 22px}.login-shell{min-height:auto;border-radius:22px}.stats{grid-template-columns:1fr}.toolbar{align-items:stretch;flex-direction:column}.toolbar-left{display:grid;grid-template-columns:1fr}.btn-primary{width:100%}.panel-body{padding:15px}.code-area{padding:0 15px 15px}.editor{height:390px;padding-left:40px}.line-mark{left:10px}.brand-mini strong{font-size:13px}}
+.case summary{align-items:flex-start}@media(max-width:700px){.case-grid{grid-template-columns:1fr}.history-summary{grid-template-columns:58px 1fr auto}}@media(max-width:560px){.login-page{padding:14px}.login-form{padding:28px 22px}.login-shell{min-height:auto;border-radius:22px}.stats{grid-template-columns:1fr}.toolbar{align-items:stretch;flex-direction:column}.toolbar-left{display:grid;grid-template-columns:1fr}.btn-primary{width:100%}.panel-body{padding:15px}.code-area{padding:0 15px 15px}.editor{height:390px;padding-left:40px}.line-mark{left:10px}.brand-mini strong{font-size:13px}}
 </style>
 </head>
 <body>
@@ -144,6 +144,7 @@ int main(void) {
               <button class="btn btn-primary" id="submit">▶ Compile &amp; Submit</button>
             </div>
             <div id="result" class="result"></div>
+            <div id="history" class="history"></div>
           </div>
         </section>
       </div>
@@ -230,6 +231,58 @@ function escapeHtml(s){
   return String(s??"").replace(/[&<>"\']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
 }
 
+function formatDate(value){
+  if(!value)return "-";
+  const d=new Date(value.replace(" ","T")+"Z");
+  return isNaN(d.getTime())?value:d.toLocaleString("th-TH",{dateStyle:"medium",timeStyle:"short"});
+}
+
+function caseHtml(c){
+  const state=c.status==="PASSED"?"pass":c.status==="NOT_RUN"?"skip":"fail";
+  const label=c.status==="PASSED"?"ผ่าน":c.status==="NOT_RUN"?"ยังไม่ได้รัน":"ไม่ผ่าน";
+  const actualClass=state==="pass"?"passout":"failout";
+  return '<details class="case case-'+state+'">'+
+    '<summary><span class="case-main"><span class="case-dot"></span><span class="case-label">Test Case '+c.no+'</span><span class="case-badge">'+label+'</span></span><span class="muted">'+escapeHtml(c.kind||"")+'</span></summary>'+
+    '<div class="case-body"><div class="case-grid">'+
+    '<div class="case-box"><label>Input</label><pre>'+escapeHtml(c.input||"")+'</pre></div>'+
+    '<div class="case-box"><label>Expected Output</label><pre>'+escapeHtml(c.expected||"")+'</pre></div>'+
+    '<div class="case-box actual"><label>Actual Output</label><pre class="'+actualClass+'">'+escapeHtml(c.actual||"—")+'</pre></div>'+
+    '</div>'+
+    (c.error?'<div class="history-error">'+escapeHtml(c.error)+'</div>':"")+
+    '</div></details>';
+}
+
+function casesHtml(details){
+  if(!details||!details.length)return '<div class="history-empty">ยังไม่มีรายละเอียด Test Case สำหรับรายการนี้</div>';
+  return '<div class="case-list">'+details.map(caseHtml).join("")+'</div>';
+}
+
+function renderHistory(rows){
+  if(!rows||!rows.length){
+    $("history").innerHTML='<div class="history-head"><h4>ประวัติการส่ง</h4></div><div class="history-empty">ยังไม่มีประวัติการส่งข้อนี้</div>';
+    return;
+  }
+  $("history").innerHTML='<div class="history-head"><h4>ประวัติการส่ง ('+rows.length+' ครั้ง)</h4><span class="muted" style="font-size:10px">กดแต่ละรายการเพื่อดู Test Case</span></div><div class="history-list">'+
+    rows.map((x,i)=>{
+      const cls=x.score>=10?"pass":x.score>0?"partial":"fail";
+      return '<details class="history-item" '+(i===0?"open":"")+'>'
+        +'<summary><div class="history-summary"><span class="history-id">ครั้งที่ '+(rows.length-i)+'</span><span class="history-date">'+formatDate(x.created)+' • '+escapeHtml(x.status)+'</span><span class="history-score '+cls+'">'+x.score+'/10</span></div></summary>'
+        +'<div class="history-detail"><div class="test-count">'+x.passed+' / '+x.total+' Test Case ผ่าน</div>'
+        +(x.error?'<div class="history-error">'+escapeHtml(x.error)+'</div>':"")
+        +casesHtml(x.details)+'</div></details>';
+    }).join("")+
+    '</div>';
+}
+
+async function loadHistory(){
+  try{
+    const rows=await api("/api/history/"+current);
+    renderHistory(rows);
+  }catch(e){
+    $("history").innerHTML='<div class="history-empty">'+escapeHtml(e.message)+'</div>';
+  }
+}
+
 async function selectQ(id){
   current=id;
   document.querySelectorAll(".q").forEach(x=>x.classList.remove("active"));
@@ -239,6 +292,7 @@ async function selectQ(id){
   try{
     const q=await api("/api/questions/"+id);
     renderProblem(q);
+    await loadHistory();
     document.body.classList.remove("menu-open");
   }catch(e){
     $("result").innerHTML='<p class="bad">'+escapeHtml(e.message)+'</p>';
@@ -287,7 +341,9 @@ $("submit").onclick=async()=>{
       '<div class="result-top"><span class="status '+(accepted?"ok":"bad")+'">'+(accepted?"ACCEPTED":"NOT ACCEPTED")+'</span><span class="score-box">'+r.score+'/10</span></div>'+
       '<div class="result-meta"><span>✓ '+r.passed+' / '+r.total+' Test Case ผ่าน</span><span>• '+escapeHtml(r.status)+'</span></div>'+
       (r.error?'<pre class="result-error">'+escapeHtml(r.error)+'</pre>':"")+
+      casesHtml(r.details)+
       '</div>';
+    await loadHistory();
   }catch(e){
     $("result").innerHTML='<div class="result-card"><span class="status bad">'+escapeHtml(e.message)+'</span></div>';
   }finally{b.disabled=false;b.textContent="▶ Compile & Submit"}
