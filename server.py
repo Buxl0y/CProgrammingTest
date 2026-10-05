@@ -35,6 +35,10 @@ def db():
  c.execute("CREATE TABLE IF NOT EXISTS q(id INTEGER PRIMARY KEY,title TEXT,body TEXT,input TEXT,output TEXT,sample_in TEXT,sample_out TEXT,score INTEGER)")
  c.execute("CREATE TABLE IF NOT EXISTS tc(id INTEGER PRIMARY KEY,qid INTEGER,kind TEXT,input TEXT,expected TEXT,weight REAL)")
  c.execute("CREATE TABLE IF NOT EXISTS sub(id INTEGER PRIMARY KEY,user_id INTEGER,qid INTEGER,code TEXT,status TEXT,score REAL,passed INTEGER,total INTEGER,error TEXT,created TEXT DEFAULT CURRENT_TIMESTAMP)")
+ c.execute("CREATE TABLE IF NOT EXISTS exam(id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER,mode TEXT,duration_minutes INTEGER,started_at INTEGER,expires_at INTEGER,finished_at INTEGER,status TEXT,created TEXT DEFAULT CURRENT_TIMESTAMP)")
+ cols_sub={row["name"] for row in c.execute("PRAGMA table_info(sub)")}
+ if "exam_id" not in cols_sub:
+  c.execute("ALTER TABLE sub ADD COLUMN exam_id INTEGER")
  if not c.execute("SELECT 1 FROM users").fetchone():
   def pw(x): return hashlib.sha256(x.encode()).hexdigest()
   c.executemany("INSERT INTO users(username,password,role) VALUES(?,?,?)",[("student",pw("student123"),"student"),("admin",pw("admin123"),"admin")])
@@ -71,11 +75,38 @@ class H(BaseHTTPRequestHandler):
   payload=base64.urlsafe_b64encode(json.dumps({"u":username,"e":int(time.time())+86400},separators=(",",":")).encode()).decode().rstrip("=")
   sig=hmac.new(SESSION_SECRET.encode(),payload.encode(),hashlib.sha256).hexdigest()
   return payload+"."+sig
+ def current_exam(self,c,u):
+  row=c.execute("SELECT * FROM exam WHERE user_id=? AND status='ACTIVE' ORDER BY id DESC LIMIT 1",(u["id"],)).fetchone()
+  if not row:return None
+  if row["expires_at"] and row["expires_at"] <= int(time.time()):
+   c.execute("UPDATE exam SET status='TIMEOUT',finished_at=? WHERE id=? AND status='ACTIVE'",(int(time.time()),row["id"])); c.commit(); return None
+  return row
+
+ def exam_payload(self,row):
+  if not row:return {"active":False}
+  now=int(time.time()); remaining=max(0,(row["expires_at"] or now)-now) if row["mode"]=="timed" else 0
+  return {"active":True,"exam":dict(row),"remaining_seconds":remaining}
+
  def do_GET(self):
   if self.path=="/" or self.path=="/index.html":
    b=WEB.read_bytes(); self.send_response(200); self.send_header("Content-Type","text/html; charset=utf-8"); self.send_header("Content-Length",str(len(b))); self.end_headers(); self.wfile.write(b); return
   u=self.user(); c=db()
   if self.path=="/api/me": return send(self,{"user":u})
+  if self.path=="/api/exam/state":
+   return send(self,self.exam_payload(self.current_exam(c,u)))
+  if self.path.startswith("/api/summary/"):
+   eid=int(self.path.rsplit("/",1)[1]); ex=c.execute("SELECT * FROM exam WHERE id=? AND user_id=?",(eid,u["id"])).fetchone()
+   if not ex:return send(self,{"error":"exam not found"},404)
+   qs=c.execute("SELECT id,title,score FROM q ORDER BY id").fetchall()
+   rows=c.execute("SELECT qid,MAX(id) AS latest_id,score,passed,total,status FROM sub WHERE user_id=? AND exam_id=? GROUP BY qid",(u["id"],eid)).fetchall()
+   by={r["qid"]:dict(r) for r in rows}
+   items=[]; total=0; max_total=0; solved=0
+   for q in qs:
+    x=by.get(q["id"]); val=float(x["score"]) if x else 0
+    total+=val; max_total+=float(q["score"] or 10)
+    if x: solved+=1
+    items.append({"qid":q["id"],"title":q["title"],"max_score":q["score"],"score":val,"passed":x["passed"] if x else 0,"test_total":x["total"] if x else 10,"status":x["status"] if x else "NOT_SUBMITTED"})
+   return send(self,{"exam":dict(ex),"total_score":round(total,2),"max_score":round(max_total,2),"solved":solved,"questions":items})
   if not u: return send(self,{"error":"login"},401)
   if self.path=="/api/questions":
    return send(self,[dict(x) for x in c.execute("SELECT id,title,body,input,output,sample_in,sample_out,score FROM q ORDER BY id")])
@@ -92,6 +123,9 @@ class H(BaseHTTPRequestHandler):
     except Exception:item["details"]=[]
     out.append(item)
    return send(self,out)
+  if self.path=="/api/submissions":
+   rows=c.execute("SELECT sub.id,sub.qid,q.title,sub.status,sub.score,sub.passed,sub.total,sub.created,sub.exam_id,exam.mode,exam.duration_minutes FROM sub JOIN q ON q.id=sub.qid LEFT JOIN exam ON exam.id=sub.exam_id WHERE sub.user_id=? ORDER BY sub.id DESC LIMIT 200",(u["id"],)).fetchall()
+   return send(self,[dict(r) for r in rows])
   if self.path=="/api/admin/submissions" and u["role"]=="admin":
    return send(self,[dict(x) for x in c.execute("SELECT sub.*,users.username FROM sub JOIN users ON users.id=sub.user_id ORDER BY sub.id DESC LIMIT 100")])
   return send(self,{"error":"not found"},404)
@@ -106,7 +140,26 @@ class H(BaseHTTPRequestHandler):
    u=self.user(); s=self.headers.get("Cookie",""); cc=cookies.SimpleCookie(s); t=cc.get("sid"); SESS.pop(t.value,None) if t else None; return send(self,{"ok":1})
   u=self.user()
   if not u:return send(self,{"error":"login"},401)
+  if p=="/api/exam/start":
+   mode=str(x.get("mode","practice"))
+   duration=int(x.get("duration_minutes",60) or 60)
+   if mode not in ("practice","timed"): return send(self,{"error":"invalid mode"},400)
+   if mode=="timed" and duration not in (30,60,90): return send(self,{"error":"เลือกเวลา 30, 60 หรือ 90 นาที"},400)
+   now=int(time.time())
+   c.execute("UPDATE exam SET status='ABANDONED',finished_at=? WHERE user_id=? AND status='ACTIVE'",(now,u["id"]))
+   expires=now+duration*60 if mode=="timed" else 0
+   c.execute("INSERT INTO exam(user_id,mode,duration_minutes,started_at,expires_at,status) VALUES(?,?,?,?,?,'ACTIVE')",(u["id"],mode,duration if mode=="timed" else None,now,expires))
+   c.commit()
+   row=c.execute("SELECT * FROM exam WHERE id=last_insert_rowid()").fetchone()
+   return send(self,self.exam_payload(row))
+  if p=="/api/exam/finish":
+   row=self.current_exam(c,u)
+   if not row:return send(self,{"active":False})
+   c.execute("UPDATE exam SET status='FINISHED',finished_at=? WHERE id=?",(int(time.time()),row["id"])); c.commit()
+   return send(self,{"ok":1,"exam_id":row["id"]})
   if p=="/api/submit":
+   exam=self.current_exam(c,u)
+   if not exam:return send(self,{"error":"ยังไม่มีรอบสอบที่กำลังทำอยู่ กรุณาเลือกโหมดสอบก่อน"},409)
    qid=int(x["qid"]); code=str(x["code"]); q=c.execute("SELECT * FROM q WHERE id=?",(qid,)).fetchone(); tests=c.execute("SELECT * FROM tc WHERE qid=? ORDER BY id",(qid,)).fetchall()
    if not q:return send(self,{"error":"question not found"},404)
    total=len(tests); passed=0; score=0; err=""; status="RUNTIME_ERROR"; details=[]
@@ -144,7 +197,7 @@ class H(BaseHTTPRequestHandler):
        if not err:err=dcase["error"]
      score=round(q["score"]*passed/total,2) if total else 0
      status="ACCEPTED" if passed==total else "WRONG_ANSWER"
-   c.execute("INSERT INTO sub(user_id,qid,code,status,score,passed,total,error,details) VALUES(?,?,?,?,?,?,?,?,?)",(u["id"],qid,code,status,score,passed,total,err,json.dumps(details,ensure_ascii=False))); c.commit()
+   c.execute("INSERT INTO sub(user_id,qid,code,status,score,passed,total,error,details,exam_id) VALUES(?,?,?,?,?,?,?,?,?,?)",(u["id"],qid,code,status,score,passed,total,err,json.dumps(details,ensure_ascii=False),exam["id"])); c.commit()
    return send(self,{"status":status,"score":score,"passed":passed,"total":total,"error":err,"details":details})
   if p=="/api/admin/question" and u["role"]=="admin":
    qid=c.execute("SELECT COALESCE(MAX(id),0)+1 FROM q").fetchone()[0]; c.execute("INSERT INTO q VALUES(?,?,?,?,?,?,?,?)",(qid,x["title"],x["body"],x.get("input",""),x.get("output",""),x.get("sample_in",""),x.get("sample_out",""),int(x.get("score",10)))); c.commit(); return send(self,{"id":qid})
