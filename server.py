@@ -36,6 +36,9 @@ def db():
  c.execute("CREATE TABLE IF NOT EXISTS tc(id INTEGER PRIMARY KEY,qid INTEGER,kind TEXT,input TEXT,expected TEXT,weight REAL)")
  c.execute("CREATE TABLE IF NOT EXISTS sub(id INTEGER PRIMARY KEY,user_id INTEGER,qid INTEGER,code TEXT,status TEXT,score REAL,passed INTEGER,total INTEGER,error TEXT,created TEXT DEFAULT CURRENT_TIMESTAMP)")
  c.execute("CREATE TABLE IF NOT EXISTS exam(id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER,mode TEXT,duration_minutes INTEGER,started_at INTEGER,expires_at INTEGER,finished_at INTEGER,status TEXT,created TEXT DEFAULT CURRENT_TIMESTAMP)")
+ cols_exam={row["name"] for row in c.execute("PRAGMA table_info(exam)")}
+ if "participant_name" not in cols_exam:
+  c.execute("ALTER TABLE exam ADD COLUMN participant_name TEXT")
  cols_sub={row["name"] for row in c.execute("PRAGMA table_info(sub)")}
  if "exam_id" not in cols_sub:
   c.execute("ALTER TABLE sub ADD COLUMN exam_id INTEGER")
@@ -91,9 +94,14 @@ class H(BaseHTTPRequestHandler):
   if self.path=="/" or self.path=="/index.html":
    b=WEB.read_bytes(); self.send_response(200); self.send_header("Content-Type","text/html; charset=utf-8"); self.send_header("Content-Length",str(len(b))); self.end_headers(); self.wfile.write(b); return
   u=self.user(); c=db()
-  if self.path=="/api/me": return send(self,{"user":u})
+  if self.path=="/api/me":
+   if not u:return send(self,{"user":None})
+   active=c.execute("SELECT participant_name FROM exam WHERE user_id=? AND status='ACTIVE' ORDER BY id DESC LIMIT 1",(u["id"],)).fetchone()
+   user=dict(u)
+   if active and active["participant_name"]: user["display_name"]=active["participant_name"]
+   return send(self,{"user":user})
   if self.path=="/api/exam/state":
-   return send(self,self.exam_payload(self.current_exam(c,u)))
+   return send(self,self.exam_payload(self.current_exam(c,u) if u else None))
   if self.path.startswith("/api/summary/"):
    eid=int(self.path.rsplit("/",1)[1]); ex=c.execute("SELECT * FROM exam WHERE id=? AND user_id=?",(eid,u["id"])).fetchone()
    if not ex:return send(self,{"error":"exam not found"},404)
