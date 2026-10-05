@@ -3,6 +3,32 @@ from pathlib import Path
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from http import cookies
 BASE=Path(__file__).parent; DB=BASE/"data.db"; WEB=BASE/"index.html"; SESS={}; SESSION_SECRET=os.getenv("SESSION_SECRET","codinglab-demo-secret-change-in-render")
+TEST_CASES={
+1:[["PUBLIC","5 10","15"],["PUBLIC","0 0","0"],["PUBLIC","-5 12","7"],["PUBLIC","123 456","579"],["PUBLIC","-10 -20","-30"],["HIDDEN","1 999","1000"],["HIDDEN","10000 25000","35000"],["HIDDEN","7 -3","4"],["HIDDEN","-100 250","150"],["HIDDEN","999999 1","1000000"]],
+2:[["PUBLIC","0","EVEN"],["PUBLIC","1","ODD"],["PUBLIC","2","EVEN"],["PUBLIC","-1","ODD"],["PUBLIC","-2","EVEN"],["HIDDEN","100","EVEN"],["HIDDEN","101","ODD"],["HIDDEN","999","ODD"],["HIDDEN","1000","EVEN"],["HIDDEN","12345","ODD"]],
+3:[["PUBLIC","4 12 7","12"],["PUBLIC","1 2 3","3"],["PUBLIC","-5 -2 -9","-2"],["PUBLIC","5 5 2","5"],["PUBLIC","0 -1 -2","0"],["HIDDEN","100 99 101","101"],["HIDDEN","-100 0 50","50"],["HIDDEN","999 999 999","999"],["HIDDEN","-8 -3 -5","-3"],["HIDDEN","42 7 19","42"]],
+4:[["PUBLIC","80 90 75 85 70","80.00"],["PUBLIC","0 0 0 0 0","0.00"],["PUBLIC","100 100 100 100 100","100.00"],["PUBLIC","1 2 3 4 5","3.00"],["PUBLIC","10 20 30 40 50","30.00"],["HIDDEN","55 65 75 85 95","75.00"],["HIDDEN","99 88 77 66 55","77.00"],["HIDDEN","12 15 18 21 24","18.00"],["HIDDEN","1 1 1 2 2","1.40"],["HIDDEN","73 82 91 64 70","76.00"]],
+5:[["PUBLIC","5\n-1 3 7 0 -2","2"],["PUBLIC","4\n1 2 3 4","4"],["PUBLIC","5\n-5 -4 -3 -2 -1","0"],["PUBLIC","3\n0 0 1","1"],["PUBLIC","6\n-1 0 2 -3 4 5","3"],["HIDDEN","7\n1 -2 3 -4 5 -6 7","4"],["HIDDEN","4\n10 20 -1 -2","2"],["HIDDEN","8\n-8 -7 0 6 5 4 -3 2","4"],["HIDDEN","1\n99","1"],["HIDDEN","5\n0 -1 0 -2 0","0"]],
+6:[["PUBLIC","hello","olleh"],["PUBLIC","a","a"],["PUBLIC","coding","gnidoc"],["PUBLIC","program","margorp"],["PUBLIC","12345","54321"],["HIDDEN","level","level"],["HIDDEN","abcde","edcba"],["HIDDEN","a1b2","2b1a"],["HIDDEN","OpenAI","IAnepO"],["HIDDEN","computer","retupmoc"]],
+7:[["PUBLIC","0","1"],["PUBLIC","1","1"],["PUBLIC","2","2"],["PUBLIC","3","6"],["PUBLIC","5","120"],["HIDDEN","6","720"],["HIDDEN","7","5040"],["HIDDEN","8","40320"],["HIDDEN","9","362880"],["HIDDEN","10","3628800"]],
+8:[["PUBLIC","4\n1 2 3 4","10"],["PUBLIC","3\n10 20 30","60"],["PUBLIC","5\n1 -2 3 -4 5","3"],["PUBLIC","1\n99","99"],["PUBLIC","6\n0 0 0 0 0 0","0"],["HIDDEN","7\n1 2 3 4 5 6 7","28"],["HIDDEN","5\n10 -10 20 -20 30","30"],["HIDDEN","4\n100 200 300 400","1000"],["HIDDEN","8\n-1 -2 -3 -4 -5 -6 -7 -8","-36"],["HIDDEN","2\n999 1","1000"]],
+9:[["PUBLIC","1","NO"],["PUBLIC","2","YES"],["PUBLIC","3","YES"],["PUBLIC","4","NO"],["PUBLIC","17","YES"],["HIDDEN","18","NO"],["HIDDEN","97","YES"],["HIDDEN","100","NO"],["HIDDEN","101","YES"],["HIDDEN","1000","NO"]],
+10:[["PUBLIC","5\n4 1 3 2 5","1 2 3 4 5"],["PUBLIC","3\n3 2 1","1 2 3"],["PUBLIC","4\n10 5 8 1","1 5 8 10"],["PUBLIC","1\n99","99"],["PUBLIC","5\n5 5 3 3 1","1 3 3 5 5"],["HIDDEN","6\n0 -1 4 -3 2 1","-3 -1 0 1 2 4"],["HIDDEN","4\n100 20 50 10","10 20 50 100"],["HIDDEN","7\n7 6 5 4 3 2 1","1 2 3 4 5 6 7"],["HIDDEN","5\n-5 -2 -9 -1 -7","-9 -7 -5 -2 -1"],["HIDDEN","8\n1 9 2 8 3 7 4 6","1 2 3 4 6 7 8 9"]]
+}
+
+def ensure_test_data(c):
+ cols={row["name"] for row in c.execute("PRAGMA table_info(sub)")}
+ if "details" not in cols:
+  c.execute("ALTER TABLE sub ADD COLUMN details TEXT")
+ for qid,cases in TEST_CASES.items():
+  if not c.execute("SELECT 1 FROM q WHERE id=?",(qid,)).fetchone():
+   continue
+  count=c.execute("SELECT COUNT(*) FROM tc WHERE qid=?",(qid,)).fetchone()[0]
+  if count!=10:
+   c.execute("DELETE FROM tc WHERE qid=?",(qid,))
+   c.executemany("INSERT INTO tc(qid,kind,input,expected,weight) VALUES(?,?,?,?,1)",[(qid,k,i,e) for k,i,e in cases])
+ c.commit()
+
 def db():
  DB.parent.mkdir(exist_ok=True); c=sqlite3.connect(DB); c.row_factory=sqlite3.Row
  c.execute("CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY,username TEXT UNIQUE,password TEXT,role TEXT)")
@@ -17,8 +43,8 @@ def db():
    c.execute("INSERT INTO q VALUES(?,?,?,?,?,?,?,?)",(i,*x,10))
    c.execute("INSERT INTO tc(qid,kind,input,expected,weight) VALUES(?,?,?,?,1)",(i,"PUBLIC",x[4],x[5]))
    c.execute("INSERT INTO tc(qid,kind,input,expected,weight) VALUES(?,?,?,?,1)",(i,"HIDDEN",x[4]+"\n",x[5]+"\n"))
-  c.commit()
- return c
+  ensure_test_data(c)
+  return c
 def send(h,obj,code=200):
  b=json.dumps(obj,ensure_ascii=False).encode(); h.send_response(code); h.send_header("Content-Type","application/json; charset=utf-8"); h.send_header("Content-Length",str(len(b))); h.end_headers(); h.wfile.write(b)
 class H(BaseHTTPRequestHandler):
@@ -57,7 +83,14 @@ class H(BaseHTTPRequestHandler):
    if not q:return send(self,{"error":"not found"},404)
    return send(self,dict(q))
   if self.path.startswith("/api/history/"):
-   qid=int(self.path.rsplit("/",1)[1]); return send(self,[dict(x) for x in c.execute("SELECT id,status,score,passed,total,created FROM sub WHERE user_id=? AND qid=? ORDER BY id DESC",(u["id"],qid))])
+   qid=int(self.path.rsplit("/",1)[1]); rows=c.execute("SELECT id,status,score,passed,total,error,created,details FROM sub WHERE user_id=? AND qid=? ORDER BY id DESC",(u["id"],qid)).fetchall()
+   out=[]
+   for row in rows:
+    item=dict(row)
+    try:item["details"]=json.loads(item.get("details") or "[]")
+    except Exception:item["details"]=[]
+    out.append(item)
+   return send(self,out)
   if self.path=="/api/admin/submissions" and u["role"]=="admin":
    return send(self,[dict(x) for x in c.execute("SELECT sub.*,users.username FROM sub JOIN users ON users.id=sub.user_id ORDER BY sub.id DESC LIMIT 100")])
   return send(self,{"error":"not found"},404)
@@ -73,32 +106,45 @@ class H(BaseHTTPRequestHandler):
   u=self.user()
   if not u:return send(self,{"error":"login"},401)
   if p=="/api/submit":
-   qid=int(x["qid"]); code=x["code"]; q=c.execute("SELECT * FROM q WHERE id=?",(qid,)).fetchone(); tests=c.execute("SELECT * FROM tc WHERE qid=? ORDER BY id",(qid,)).fetchall()
-   total=len(tests); passed=0; score=0; err=""; status="RUNTIME_ERROR"
+   qid=int(x["qid"]); code=str(x["code"]); q=c.execute("SELECT * FROM q WHERE id=?",(qid,)).fetchone(); tests=c.execute("SELECT * FROM tc WHERE qid=? ORDER BY id",(qid,)).fetchall()
+   if not q:return send(self,{"error":"question not found"},404)
+   total=len(tests); passed=0; score=0; err=""; status="RUNTIME_ERROR"; details=[]
+   for idx,t in enumerate(tests,1):
+    details.append({"no":idx,"kind":t["kind"],"input":t["input"],"expected":t["expected"],"actual":"","status":"NOT_RUN","error":""})
    with tempfile.TemporaryDirectory() as d:
     src=Path(d)/"main.c"; exe=Path(d)/"main"; src.write_text(code,encoding="utf-8")
+    cp=None
     try:
      cp=subprocess.run(["gcc",str(src),"-O2","-std=c11","-o",str(exe)],capture_output=True,text=True,timeout=5)
     except subprocess.TimeoutExpired:
-     status="COMPILE_TIMEOUT"; err="Compiler timeout (5 seconds)"; cp=None
+     status="COMPILE_TIMEOUT"; err="Compiler timeout (5 seconds)"
     except Exception as e:
-     status="COMPILE_ERROR"; err=str(e); cp=None
+     status="COMPILE_ERROR"; err=str(e)
     if cp is not None and cp.returncode != 0:
      status="COMPILE_ERROR"; err=cp.stderr or "Compilation failed"
     elif cp is not None:
-     for t in tests:
+     for idx,t in enumerate(tests):
+      dcase=details[idx]
       try:
        r=subprocess.run([str(exe)],input=t["input"],capture_output=True,text=True,timeout=2)
-       if r.returncode==0 and " ".join(r.stdout.split())==" ".join(t["expected"].split()):
-        passed += 1
+       dcase["actual"]=r.stdout
+       if r.returncode!=0:
+        dcase["status"]="FAILED"; dcase["error"]=r.stderr or ("Program exited with code "+str(r.returncode))
+        if not err:err=dcase["error"]
+       elif " ".join(r.stdout.split())==" ".join(t["expected"].split()):
+        passed += 1; dcase["status"]="PASSED"
+       else:
+        dcase["status"]="FAILED"
       except subprocess.TimeoutExpired:
-       err="One or more test cases exceeded the 2 second limit."
+       dcase["status"]="FAILED"; dcase["error"]="เกินเวลา 2 วินาที"
+       if not err:err=dcase["error"]
       except Exception as e:
-       err=str(e)
+       dcase["status"]="FAILED"; dcase["error"]=str(e)
+       if not err:err=dcase["error"]
      score=round(q["score"]*passed/total,2) if total else 0
      status="ACCEPTED" if passed==total else "WRONG_ANSWER"
-   c.execute("INSERT INTO sub(user_id,qid,code,status,score,passed,total,error) VALUES(?,?,?,?,?,?,?,?)",(u["id"],qid,code,status,score,passed,total,err)); c.commit()
-   return send(self,{"status":status,"score":score,"passed":passed,"total":total,"error":err})
+   c.execute("INSERT INTO sub(user_id,qid,code,status,score,passed,total,error,details) VALUES(?,?,?,?,?,?,?,?,?)",(u["id"],qid,code,status,score,passed,total,err,json.dumps(details,ensure_ascii=False))); c.commit()
+   return send(self,{"status":status,"score":score,"passed":passed,"total":total,"error":err,"details":details})
   if p=="/api/admin/question" and u["role"]=="admin":
    qid=c.execute("SELECT COALESCE(MAX(id),0)+1 FROM q").fetchone()[0]; c.execute("INSERT INTO q VALUES(?,?,?,?,?,?,?,?)",(qid,x["title"],x["body"],x.get("input",""),x.get("output",""),x.get("sample_in",""),x.get("sample_out",""),int(x.get("score",10)))); c.commit(); return send(self,{"id":qid})
   return send(self,{"error":"not found"},404)
