@@ -29,15 +29,9 @@ def ensure_test_data(c):
    c.executemany("INSERT INTO tc(qid,kind,input,expected,weight) VALUES(?,?,?,?,1)",[(qid,k,i,e) for k,i,e in cases])
  c.commit()
 
-def db():
- global DB_READY
- DB.parent.mkdir(exist_ok=True); c=sqlite3.connect(DB,timeout=30); c.row_factory=sqlite3.Row
- c.execute("PRAGMA busy_timeout=30000")
- if not DB_READY:
-  with DB_INIT_LOCK:
-   if not DB_READY:
-    c.execute("PRAGMA journal_mode=WAL")
-    c.execute("PRAGMA synchronous=NORMAL")
+def _init_db(c):
+ c.execute("PRAGMA journal_mode=WAL")
+ c.execute("PRAGMA synchronous=NORMAL")
  c.execute("CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY,username TEXT UNIQUE,password TEXT,role TEXT)")
  c.execute("CREATE TABLE IF NOT EXISTS q(id INTEGER PRIMARY KEY,title TEXT,body TEXT,input TEXT,output TEXT,sample_in TEXT,sample_out TEXT,score INTEGER)")
  c.execute("CREATE TABLE IF NOT EXISTS tc(id INTEGER PRIMARY KEY,qid INTEGER,kind TEXT,input TEXT,expected TEXT,weight REAL)")
@@ -59,7 +53,21 @@ def db():
    c.execute("INSERT INTO tc(qid,kind,input,expected,weight) VALUES(?,?,?,?,1)",(i,"HIDDEN",x[4]+"\n",x[5]+"\n"))
   c.commit()
  ensure_test_data(c)
+ c.commit()
+
+def db():
+ global DB_READY
+ DB.parent.mkdir(exist_ok=True)
+ c=sqlite3.connect(DB,timeout=30)
+ c.row_factory=sqlite3.Row
+ c.execute("PRAGMA busy_timeout=30000")
+ if not DB_READY:
+  with DB_INIT_LOCK:
+   if not DB_READY:
+    _init_db(c)
+    DB_READY=True
  return c
+
 def send(h,obj,code=200):
  b=json.dumps(obj,ensure_ascii=False).encode(); h.send_response(code); h.send_header("Content-Type","application/json; charset=utf-8"); h.send_header("Content-Length",str(len(b))); h.end_headers(); h.wfile.write(b)
 class H(BaseHTTPRequestHandler):
