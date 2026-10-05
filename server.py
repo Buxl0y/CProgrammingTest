@@ -103,6 +103,7 @@ class H(BaseHTTPRequestHandler):
   if self.path=="/api/exam/state":
    return send(self,self.exam_payload(self.current_exam(c,u) if u else None))
   if self.path.startswith("/api/summary/"):
+   if not u:return send(self,{"error":"login"},401)
    eid=int(self.path.rsplit("/",1)[1]); ex=c.execute("SELECT * FROM exam WHERE id=? AND user_id=?",(eid,u["id"])).fetchone()
    if not ex:return send(self,{"error":"exam not found"},404)
    qs=c.execute("SELECT id,title,score FROM q ORDER BY id").fetchall()
@@ -114,7 +115,7 @@ class H(BaseHTTPRequestHandler):
     total+=val; max_total+=float(q["score"] or 10)
     if x: solved+=1
     items.append({"qid":q["id"],"title":q["title"],"max_score":q["score"],"score":val,"passed":x["passed"] if x else 0,"test_total":x["total"] if x else 10,"status":x["status"] if x else "NOT_SUBMITTED"})
-   return send(self,{"exam":dict(ex),"total_score":round(total,2),"max_score":round(max_total,2),"solved":solved,"questions":items})
+   return send(self,{"exam":dict(ex),"participant_name":ex["participant_name"],"total_score":round(total,2),"max_score":round(max_total,2),"solved":solved,"questions":items})
   if not u: return send(self,{"error":"login"},401)
   if self.path=="/api/questions":
    return send(self,[dict(x) for x in c.execute("SELECT id,title,body,input,output,sample_in,sample_out,score FROM q ORDER BY id")])
@@ -132,7 +133,7 @@ class H(BaseHTTPRequestHandler):
     out.append(item)
    return send(self,out)
   if self.path=="/api/submissions":
-   rows=c.execute("SELECT sub.id,sub.qid,q.title,sub.status,sub.score,sub.passed,sub.total,sub.created,sub.exam_id,exam.mode,exam.duration_minutes FROM sub JOIN q ON q.id=sub.qid LEFT JOIN exam ON exam.id=sub.exam_id WHERE sub.user_id=? ORDER BY sub.id DESC LIMIT 200",(u["id"],)).fetchall()
+   rows=c.execute("SELECT sub.id,sub.qid,q.title,sub.status,sub.score,sub.passed,sub.total,sub.created,sub.exam_id,exam.mode,exam.duration_minutes,exam.participant_name FROM sub JOIN q ON q.id=sub.qid LEFT JOIN exam ON exam.id=sub.exam_id WHERE sub.user_id=? ORDER BY sub.id DESC LIMIT 200",(u["id"],)).fetchall()
    return send(self,[dict(r) for r in rows])
   if self.path=="/api/admin/submissions" and u["role"]=="admin":
    return send(self,[dict(x) for x in c.execute("SELECT sub.*,users.username FROM sub JOIN users ON users.id=sub.user_id ORDER BY sub.id DESC LIMIT 100")])
@@ -180,7 +181,8 @@ class H(BaseHTTPRequestHandler):
    now=int(time.time())
    c.execute("UPDATE exam SET status='ABANDONED',finished_at=? WHERE user_id=? AND status='ACTIVE'",(now,u["id"]))
    expires=now+duration*60 if mode=="timed" else 0
-   c.execute("INSERT INTO exam(user_id,mode,duration_minutes,started_at,expires_at,status) VALUES(?,?,?,?,?,'ACTIVE')",(u["id"],mode,duration if mode=="timed" else None,now,expires))
+   pname=u.get("display_name") or u.get("username")
+   c.execute("INSERT INTO exam(user_id,participant_name,mode,duration_minutes,started_at,expires_at,status) VALUES(?,?,?,?,?,?,?)",(u["id"],pname,mode,duration if mode=="timed" else None,now,expires,"ACTIVE"))
    c.commit()
    row=c.execute("SELECT * FROM exam WHERE id=last_insert_rowid()").fetchone()
    return send(self,self.exam_payload(row))
