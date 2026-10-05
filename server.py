@@ -30,7 +30,14 @@ def ensure_test_data(c):
  c.commit()
 
 def db():
- global DB_READY\n DB.parent.mkdir(exist_ok=True); c=sqlite3.connect(DB,timeout=30); c.row_factory=sqlite3.Row\n c.execute("PRAGMA busy_timeout=30000")\n if not DB_READY:\n  with DB_INIT_LOCK:\n   if not DB_READY:\n    c.execute("PRAGMA journal_mode=WAL")\n    c.execute("PRAGMA synchronous=NORMAL")
+ global DB_READY
+ DB.parent.mkdir(exist_ok=True); c=sqlite3.connect(DB,timeout=30); c.row_factory=sqlite3.Row
+ c.execute("PRAGMA busy_timeout=30000")
+ if not DB_READY:
+  with DB_INIT_LOCK:
+   if not DB_READY:
+    c.execute("PRAGMA journal_mode=WAL")
+    c.execute("PRAGMA synchronous=NORMAL")
  c.execute("CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY,username TEXT UNIQUE,password TEXT,role TEXT)")
  c.execute("CREATE TABLE IF NOT EXISTS q(id INTEGER PRIMARY KEY,title TEXT,body TEXT,input TEXT,output TEXT,sample_in TEXT,sample_out TEXT,score INTEGER)")
  c.execute("CREATE TABLE IF NOT EXISTS tc(id INTEGER PRIMARY KEY,qid INTEGER,kind TEXT,input TEXT,expected TEXT,weight REAL)")
