@@ -212,10 +212,14 @@ class H(BaseHTTPRequestHandler):
     c.execute("UPDATE exam SET status='ABANDONED',finished_at=? WHERE user_id=? AND status='ACTIVE'",(int(time.time()),u["id"])); c.commit()
    b=json.dumps({"ok":1}).encode(); self.send_response(200); self.send_header("Content-Type","application/json; charset=utf-8"); self.send_header("Content-Length",str(len(b))); self.send_header("Set-Cookie","sid=; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax; Path=/"); self.end_headers(); self.wfile.write(b); return
   if p=="/api/admin/login":
-   username=str(x.get("username","")).strip().lower(); password=str(x.get("password",""))
-   u=c.execute("SELECT * FROM users WHERE lower(username)=? AND role='admin'",(username,)).fetchone()
-   ph=hashlib.sha256(password.encode()).hexdigest()
-   if not u or not hmac.compare_digest(u["password"],ph): return send(self,{"error":"ชื่อผู้ใช้หรือรหัสผ่าน Admin ไม่ถูกต้อง"},401)
+   api_key=str(x.get("api_key","")).strip()
+   expected_key=os.getenv("RENDER_API_KEY") or os.getenv("ADMIN_API_KEY","")
+   if not expected_key:
+    return send(self,{"error":"ยังไม่ได้ตั้ง RENDER_API_KEY ใน Render Environment"},503)
+   if not api_key or not hmac.compare_digest(api_key,expected_key):
+    return send(self,{"error":"API Key ไม่ถูกต้อง"},401)
+   u=c.execute("SELECT * FROM users WHERE username='admin' AND role='admin'").fetchone()
+   if not u:return send(self,{"error":"ไม่พบบัญชี Admin"},500)
    token=self.make_token(u["username"])
    return send(self,{"user":dict(u),"token":token})
   if p=="/api/guest/start":
