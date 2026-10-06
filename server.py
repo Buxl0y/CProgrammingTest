@@ -124,6 +124,27 @@ def db():
 
 def send(h,obj,code=200):
  b=json.dumps(obj,ensure_ascii=False).encode(); h.send_response(code); h.send_header("Content-Type","application/json; charset=utf-8"); h.send_header("Content-Length",str(len(b))); h.end_headers(); h.wfile.write(b)
+
+def outputs_match(actual, expected):
+ # Compare whitespace-insensitively, while allowing a small tolerance for decimal
+ # floating-point output. Integers and text still require exact token matches.
+ a_tokens = actual.split()
+ e_tokens = expected.split()
+ if len(a_tokens) != len(e_tokens):
+  return False
+ for a, e in zip(a_tokens, e_tokens):
+  try:
+   af, ef = float(a), float(e)
+   if any(ch in a.lower() for ch in ".e") or any(ch in e.lower() for ch in ".e"):
+    if abs(af - ef) <= 0.0005:
+     continue
+   if af == ef and (a.lstrip("+-").isdigit() and e.lstrip("+-").isdigit()):
+    continue
+   return False
+  except ValueError:
+   if a != e:
+    return False
+ return True
 class H(BaseHTTPRequestHandler):
  def read(self):
   n=int(self.headers.get("Content-Length",0)); return json.loads(self.rfile.read(n) or b"{}")
@@ -352,7 +373,7 @@ class H(BaseHTTPRequestHandler):
        if r.returncode!=0:
         dcase["status"]="FAILED"; dcase["error"]=r.stderr or ("Program exited with code "+str(r.returncode))
         if not err:err=dcase["error"]
-       elif " ".join(r.stdout.split())==" ".join(t["expected"].split()):
+       elif outputs_match(r.stdout, t["expected"]):
         passed += 1; dcase["status"]="PASSED"
        else:
         dcase["status"]="FAILED"
