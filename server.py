@@ -160,7 +160,7 @@ class H(BaseHTTPRequestHandler):
    if not u:return send(self,{"error":"login"},401)
    eid=int(self.path.rsplit("/",1)[1]); ex=c.execute("SELECT * FROM exam WHERE id=? AND user_id=?",(eid,u["id"])).fetchone()
    if not ex:return send(self,{"error":"exam not found"},404)
-   qs=c.execute("SELECT id,title,score FROM q ORDER BY id").fetchall()
+   qs=c.execute("SELECT id,title,score FROM q WHERE id>=11 ORDER BY id").fetchall()
    rows=c.execute("SELECT s.qid,s.score,s.passed,s.total,s.status FROM sub s WHERE s.user_id=? AND s.exam_id=? AND s.id=(SELECT MAX(s2.id) FROM sub s2 WHERE s2.user_id=s.user_id AND s2.exam_id=s.exam_id AND s2.qid=s.qid)",(u["id"],eid)).fetchall()
    by={r["qid"]:dict(r) for r in rows}
    items=[]; total=0; max_total=0; solved=0
@@ -172,7 +172,7 @@ class H(BaseHTTPRequestHandler):
    return send(self,{"exam":dict(ex),"participant_name":ex["participant_name"],"total_score":round(total,2),"max_score":round(max_total,2),"solved":solved,"questions":items})
   if not u: return send(self,{"error":"login"},401)
   if self.path=="/api/questions":
-   return send(self,[dict(x) for x in c.execute("SELECT id,title,body,input,output,sample_in,sample_out,score FROM q ORDER BY id")])
+   return send(self,[dict(x) for x in c.execute("SELECT id,title,body,input,output,sample_in,sample_out,score FROM q WHERE id>=11 ORDER BY id")])
   if self.path.startswith("/api/questions/"):
    qid=int(self.path.rsplit("/",1)[1]); q=c.execute("SELECT * FROM q WHERE id=?",(qid,)).fetchone()
    if not q:return send(self,{"error":"not found"},404)
