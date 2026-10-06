@@ -16,6 +16,23 @@ TEST_CASES={
 10:[["PUBLIC","5\n4 1 3 2 5","1 2 3 4 5"],["PUBLIC","3\n3 2 1","1 2 3"],["PUBLIC","4\n10 5 8 1","1 5 8 10"],["PUBLIC","1\n99","99"],["PUBLIC","5\n5 5 3 3 1","1 3 3 5 5"],["HIDDEN","6\n0 -1 4 -3 2 1","-3 -1 0 1 2 4"],["HIDDEN","4\n100 20 50 10","10 20 50 100"],["HIDDEN","7\n7 6 5 4 3 2 1","1 2 3 4 5 6 7"],["HIDDEN","5\n-5 -2 -9 -1 -7","-9 -7 -5 -2 -1"],["HIDDEN","8\n1 9 2 8 3 7 4 6","1 2 3 4 6 7 8 9"]]
 }
 
+SOLUTIONS={
+ 11: "#include <stdio.h>\n\nint main(void) {\n    double r;\n    scanf(\"%lf\", &r);\n    double area = 3.142 * r * r;\n    printf(\"%.3f\\n\", area);\n    return 0;\n}",
+ 12: "#include <stdio.h>\n\nint main(void) {\n    int score;\n    scanf(\"%d\", &score);\n    if (score >= 90 && score <= 100) printf(\"A\");\n    else if (score >= 85) printf(\"B+\");\n    else if (score >= 75) printf(\"B\");\n    else if (score >= 70) printf(\"C+\");\n    else if (score >= 60) printf(\"C\");\n    else printf(\"See you next semester\");\n    printf(\"\\n\");\n    return 0;\n}",
+ 13: "#include <stdio.h>\n\nint main(void) {\n    long long n, sum = 0;\n    scanf(\"%lld\", &n);\n    for (long long i = 1; i <= n; ++i) sum += i;\n    printf(\"%lld\\n\", sum);\n    return 0;\n}",
+ 14: "#include <stdio.h>\n\nint main(void) {\n    long long w, l, h;\n    scanf(\"%lld %lld %lld\", &w, &l, &h);\n    printf(\"%lld\\n\", w * l * h);\n    return 0;\n}",
+ 15: "#include <stdio.h>\n\nint main(void) {\n    double liters; int source;\n    scanf(\"%lf%d\", &liters, &source);\n    double factor;\n    if (source == 1) factor = 0.0003;\n    else if (source == 2) factor = 0.0001;\n    else if (source == 3) factor = 0.0004;\n    else { printf(\"Invalid Input\\n\"); return 0; }\n    printf(\"%.4f\\n\", liters * factor);\n    return 0;\n}",
+ 16: "#include <stdio.h>\n\nint main(void) {\n    int a[3], b[3], A = 0, B = 0;\n    for (int i=0;i<3;i++) scanf(\"%d\",&a[i]);\n    for (int i=0;i<3;i++) scanf(\"%d\",&b[i]);\n    for (int i=0;i<3;i++) { if(a[i]>b[i]) A++; else if(a[i]<b[i]) B++; }\n    printf(\"%d %d\\n\", A, B);\n    return 0;\n}",
+ 17: "#include <stdio.h>\n\nint main(void) {\n    double f; scanf(\"%lf\",&f);\n    printf(\"%.2f\\n\",(f-32.0)*5.0/9.0);\n    return 0;\n}",
+ 18: "#include <stdio.h>\n\nint main(void) {\n    int h; scanf(\"%d\",&h);\n    printf(\"%d\\n\",h/168);\n    printf(\"%d\\n\",(h%168)/24);\n    printf(\"%d\\n\",h%24);\n    return 0;\n}",
+ 19: "#include <stdio.h>\n\nint main(void) {\n    char c; scanf(\" %c\",&c);\n    switch(c){case 'I':printf(\"1\\n\");break;case 'V':printf(\"5\\n\");break;case 'X':printf(\"10\\n\");break;case 'L':printf(\"50\\n\");break;case 'C':printf(\"100\\n\");break;case 'D':printf(\"500\\n\");break;case 'M':printf(\"1000\\n\");break;default:printf(\"Invalid\\n\");}\n    return 0;\n}",
+ 20: "#include <stdio.h>\n\nint main(void) {\n    int n, even=0, odd=0; long long x;\n    scanf(\"%d\",&n);\n    for(int i=0;i<n;i++){scanf(\"%lld\",&x); if(x%2==0) even++; else odd++;}\n    printf(\"%d\\n\",even*6+odd*5);\n    return 0;\n}",
+ 21: "#include <stdio.h>\n\nint main(void) {\n    char n[105]; long long k; scanf(\"%104s %lld\",n,&k);\n    int sum=0; for(int i=0;n[i];i++) sum+=n[i]-'0';\n    if(sum==0 || k==0){printf(\"0\\n\"); return 0;}\n    long long v=(sum%9)*(k%9);\n    int ans=(v==0)?9:(int)((v-1)%9+1);\n    printf(\"%d\\n\",ans);\n    return 0;\n}",
+ 22: "#include <stdio.h>\n\nint main(void) {\n    int n; scanf(\"%d\",&n);\n    const int seq[5]={1,2,3,4,0};\n    for(int i=1;i<=n;i++){\n        for(int j=0;j<i;j++){int v=(i-1-j)%5; printf(\"%d\",seq[v]); if(j+1<i) printf(\" \");}\n        printf(\"\\n\");\n    }\n    return 0;\n}",
+ 23: "#include <stdio.h>\n\nint main(void) {\n    long long a,b; scanf(\"%lld %lld\",&a,&b); printf(\"%lld\\n\",a+b); return 0;\n}",
+ 24: "#include <stdio.h>\n\nint main(void) {\n    int a,b,c; scanf(\"%d %d %d\",&a,&b,&c);\n    if(a<=0||b<=0||c<=0||a+b<=c||a+c<=b||b+c<=a) printf(\"0\\n\");\n    else if(a==b&&b==c) printf(\"1\\n\");\n    else if(a==b||b==c||a==c) printf(\"2\\n\");\n    else printf(\"3\\n\");\n    return 0;\n}"
+}
+
 def ensure_test_data(c):
  cols={row["name"] for row in c.execute("PRAGMA table_info(sub)")}
  if "details" not in cols:
