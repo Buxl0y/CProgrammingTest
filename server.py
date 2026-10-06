@@ -136,7 +136,14 @@ def outputs_match(actual, expected):
   try:
    af, ef = float(a), float(e)
    if any(ch in a.lower() for ch in ".e") or any(ch in e.lower() for ch in ".e"):
-    if abs(af - ef) <= 0.0005:
+    # Use half of the expected value's displayed decimal unit, plus a tiny
+    # epsilon for binary floating-point representation.
+    if "." in e and "e" not in e.lower():
+     decimals = len(e.split(".",1)[1])
+     tolerance = 0.5 * (10 ** (-decimals)) + 1e-9
+    else:
+     tolerance = 1e-9
+    if abs(af - ef) <= tolerance:
      continue
    if af == ef and (a.lstrip("+-").isdigit() and e.lstrip("+-").isdigit()):
     continue
