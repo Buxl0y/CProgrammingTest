@@ -318,7 +318,7 @@ async function showSummary(examId,finalResult=false){
       '<div style="overflow:auto"><table class="summary-table"><thead><tr><th>ข้อ</th><th>โจทย์</th><th>คะแนน</th><th>Test Case</th><th>สถานะ</th></tr></thead><tbody>'+
       j.questions.map(x=>{
         const cls=x.score>=x.max_score?"score-good":x.score>0?"score-mid":"score-zero";
-        return '<tr><td>'+x.qid+'</td><td>'+escapeHtml(x.title)+'</td><td class="'+cls+'">'+x.score+'/'+x.max_score+'</td><td>'+x.passed+'/'+x.test_total+'</td><td>'+escapeHtml(x.status)+'</td></tr>';
+        return '<tr><td>'+qNumber(x.qid)+'</td><td>'+escapeHtml(x.title)+'</td><td class="'+cls+'">'+x.score+'/'+x.max_score+'</td><td>'+x.passed+'/'+x.test_total+'</td><td>'+escapeHtml(x.status)+'</td></tr>';
       }).join("")+
       '</tbody></table></div>';
     $("summaryClose").onclick=finalResult?returnToStart:()=>closeModal("summaryModal");
@@ -348,7 +348,7 @@ async function showGlobalHistory(){
     if(!rows.length){$("globalHistoryContent").innerHTML='<div class="history-empty">ยังไม่มีประวัติการส่ง</div>';openModal("historyModal");return;}
     $("globalHistoryContent").innerHTML='<div class="global-history">'+rows.map(x=>{
       const cls=x.score>=10?"score-good":x.score>0?"score-mid":"score-zero";
-      return '<div class="global-item"><div><b>ข้อ '+x.qid+' — '+escapeHtml(x.title)+'</b><div class="global-meta">'+formatDate(x.created)+' • '+escapeHtml(x.status)+' • '+(x.mode==="timed"?"จับเวลา":"ฝึกทำโจทย์")+'</div></div><div class="global-score '+cls+'">'+x.score+'/10<br><span class="global-meta">'+x.passed+'/'+x.total+' TC</span></div></div>';
+      return '<div class="global-item"><div><b>ข้อ '+qNumber(x.qid)+' — '+escapeHtml(x.title)+'</b><div class="global-meta">'+formatDate(x.created)+' • '+escapeHtml(x.status)+' • '+(x.mode==="timed"?"จับเวลา":"ฝึกทำโจทย์")+'</div></div><div class="global-score '+cls+'">'+x.score+'/10<br><span class="global-meta">'+x.passed+'/'+x.total+' TC</span></div></div>';
     }).join("")+'</div>';
     openModal("historyModal");
   }catch(e){$("globalHistoryContent").innerHTML='<div class="history-empty">'+escapeHtml(e.message)+'</div>';openModal("historyModal")}
@@ -378,9 +378,12 @@ function show(){
   loadExamState();
 }
 
+function qNumber(id){const i=questions.findIndex(x=>Number(x.id)===Number(id));return i>=0?i+1:id;}
+
 function renderProblem(q){
-  $("title").textContent="ข้อ "+q.id+": "+q.title;
-  $("statQuestion").textContent="ข้อ "+q.id;
+  const no=qNumber(q.id);
+  $("title").textContent="ข้อ "+no+": "+q.title;
+  $("statQuestion").textContent="ข้อ "+no;
   $("statScore").textContent=(q.score||10)+" คะแนน";
   $("problem").innerHTML="";
   
@@ -412,7 +415,7 @@ async function load(){
   questions=await api("/api/questions");
   $("progress").textContent="0 / "+questions.length;
   $("qs").innerHTML=questions.map(q=>'<button class="q" id="q'+q.id+'" onclick="selectQ('+q.id+')"><span class="q-num">'+q.id+'</span><span class="q-info"><b>'+escapeHtml(q.title)+'</b><span>คะแนน '+q.score+'</span></span></button>').join("");
-  selectQ(1);
+  if(questions.length) selectQ(questions[0].id);
 }
 
 function escapeHtml(s){
@@ -475,7 +478,7 @@ async function selectQ(id){
   current=id;
   document.querySelectorAll(".q").forEach(x=>x.classList.remove("active"));
   $("q"+id)?.classList.add("active");
-  $("progress").textContent=id+" / "+questions.length;
+  $("progress").textContent=qNumber(id)+" / "+questions.length;
   $("result").innerHTML="";
   try{
     const q=await api("/api/questions/"+id);
