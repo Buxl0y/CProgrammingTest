@@ -414,7 +414,7 @@ function renderProblem(q){
 async function load(){
   questions=await api("/api/questions");
   $("progress").textContent="0 / "+questions.length;
-  $("qs").innerHTML=questions.map(q=>'<button class="q" id="q'+q.id+'" onclick="selectQ('+q.id+')"><span class="q-num">'+q.id+'</span><span class="q-info"><b>'+escapeHtml(q.title)+'</b><span>คะแนน '+q.score+'</span></span></button>').join("");
+  $("qs").innerHTML=questions.map((q,i)=>'<button class="q" id="q'+q.id+'" onclick="selectQ('+q.id+')"><span class="q-num">'+(i+1)+'</span><span class="q-info"><b>'+escapeHtml(q.title)+'</b><span>คะแนน '+q.score+'</span></span></button>').join("");
   if(questions.length) selectQ(questions[0].id);
 }
 
