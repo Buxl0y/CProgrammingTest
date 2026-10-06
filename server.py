@@ -23,10 +23,8 @@ def ensure_test_data(c):
  for qid,cases in TEST_CASES.items():
   if not c.execute("SELECT 1 FROM q WHERE id=?",(qid,)).fetchone():
    continue
-  count=c.execute("SELECT COUNT(*) FROM tc WHERE qid=?",(qid,)).fetchone()[0]
-  if count!=10:
-   c.execute("DELETE FROM tc WHERE qid=?",(qid,))
-   c.executemany("INSERT INTO tc(qid,kind,input,expected,weight) VALUES(?,?,?,?,1)",[(qid,k,i,e) for k,i,e in cases])
+  c.execute("DELETE FROM tc WHERE qid=?",(qid,))
+  c.executemany("INSERT INTO tc(qid,kind,input,expected,weight) VALUES(?,?,?,?,1)",[(qid,k,i,e) for k,i,e in cases])
  c.commit()
 
 def _init_db(c):
@@ -54,7 +52,7 @@ def _init_db(c):
   c.commit()
   extra=[
    (11,"คำนวณพื้นที่วงกลม (CalCirArea)","รับค่ารัศมีของวงกลม แล้วคำนวณพื้นที่ด้วยสูตร A = 3.142 × r² และแสดงผลทศนิยม 3 ตำแหน่ง","จำนวนจริง 1 ค่า คือรัศมี","พื้นที่วงกลม แสดงทศนิยม 3 ตำแหน่ง","2","12.568",[
-    ("PUBLIC","2","12.568"),("PUBLIC","10","314.200"),("PUBLIC","24","1809.792"),("PUBLIC","1","3.142"),("PUBLIC","5.5","95.043"),("HIDDEN","0","0.000"),("HIDDEN","3","28.278"),("HIDDEN","7.25","165.108"),("HIDDEN","12.5","490.938"),("HIDDEN","100","31420.000")]),
+    ("PUBLIC","2","12.568"),("PUBLIC","10","314.200"),("PUBLIC","24","1809.792"),("PUBLIC","1","3.142"),("PUBLIC","5.5","95.045"),("HIDDEN","0","0.000"),("HIDDEN","3","28.278"),("HIDDEN","7.25","165.151"),("HIDDEN","12.5","490.938"),("HIDDEN","100","31420.000")]),
    (12,"คำนวณเกรด (CalGrade)","รับคะแนนจำนวนเต็มแล้วแสดงเกรดตามช่วงคะแนน: 90-100 A, 85-89 B+, 75-84 B, 70-74 C+, 60-69 C และ 0-59 แสดง See you next semester","จำนวนเต็ม 1 ค่า","เกรดหรือข้อความตามเงื่อนไข","90","A",[
     ("PUBLIC","90","A"),("PUBLIC","59","See you next semester"),("PUBLIC","69","C"),("PUBLIC","85","B+"),("PUBLIC","75","B"),("HIDDEN","100","A"),("HIDDEN","89","B+"),("HIDDEN","84","B"),("HIDDEN","74","C+"),("HIDDEN","60","C")]),
    (13,"คำนวณผลรวมตัวเลข (CalSum)","รับจำนวนเต็ม N แล้วคำนวณผลรวม 1 ถึง N","จำนวนเต็ม 1 ค่า","ผลรวมเป็นจำนวนเต็ม","8","36",[
@@ -66,9 +64,9 @@ def _init_db(c):
    (16,"เรตติ้งข้อสอบ (ExamRating)","รับคะแนนประเมินข้อสอบ 2 ข้อ ข้อละ 3 ด้าน เปรียบเทียบทีละด้าน ถ้าข้อใดได้คะแนนมากกว่าให้เรตติ้งเพิ่ม 1 คะแนน ถ้าเท่ากันไม่มีใครได้เพิ่ม","2 บรรทัด บรรทัดละจำนวนเต็ม 3 ค่า","เรตติ้งของข้อสอบข้อที่ 1 และ 2 คั่นด้วยช่องว่าง","17 28 30\n80 16 15","2 1",[
     ("PUBLIC","17 28 30\n80 16 15","2 1"),("PUBLIC","56 25 37\n56 39 35","1 1"),("PUBLIC","1 2 3\n3 2 1","1 1"),("PUBLIC","100 100 100\n1 1 1","3 0"),("PUBLIC","1 1 1\n100 100 100","0 3"),("HIDDEN","50 50 50\n50 50 50","0 0"),("HIDDEN","90 10 70\n80 20 60","2 1"),("HIDDEN","10 90 30\n20 80 40","1 2"),("HIDDEN","7 8 9\n7 9 8","1 1"),("HIDDEN","99 1 50\n1 99 50","1 1")]),
    (17,"แปลงอุณหภูมิ (FtoC)","รับอุณหภูมิองศาฟาเรนไฮต์ แล้วแปลงเป็นองศาเซลเซียสด้วยสูตร (F - 32) × 5/9 และแสดงทศนิยม 2 ตำแหน่ง","จำนวนจริง 1 ค่า","อุณหภูมิองศาเซลเซียสทศนิยม 2 ตำแหน่ง","32","0.00",[
-    ("PUBLIC","32","0.00"),("PUBLIC","101.3","38.50"),("PUBLIC","212","100.00"),("PUBLIC","0","-17.78"),("PUBLIC","-40","-40.00"),("HIDDEN","100","37.78"),("HIDDEN","98.6","37.00"),("HIDDEN","50","10.00"),("HIDDEN","451.4","232.00"),("HIDDEN","77","25.00")]),
+    ("PUBLIC","32","0.00"),("PUBLIC","101.3","38.50"),("PUBLIC","212","100.00"),("PUBLIC","0","-17.78"),("PUBLIC","-40","-40.00"),("HIDDEN","100","37.78"),("HIDDEN","98.6","37.00"),("HIDDEN","50","10.00"),("HIDDEN","451.4","233.00"),("HIDDEN","77","25.00")]),
    (18,"ชั่วโมงเป็นสัปดาห์ วัน ชั่วโมง (HourDayWeek)","รับจำนวนชั่วโมง 0-9999 แล้วแปลงเป็นจำนวนสัปดาห์ วัน และชั่วโมง โดย 1 วัน=24 ชั่วโมง และ 1 สัปดาห์=7 วัน","จำนวนเต็ม 1 ค่า","แสดง 3 บรรทัด: สัปดาห์ วัน ชั่วโมง","74","0\n3\n2",[
-    ("PUBLIC","74","0\n3\n2"),("PUBLIC","400","2\n2\n16"),("PUBLIC","23","0\n0\n23"),("PUBLIC","168","1\n0\n0"),("PUBLIC","24","0\n1\n0"),("HIDDEN","0","0\n0\n0"),("HIDDEN","167","0\n6\n23"),("HIDDEN","169","1\n0\n1"),("HIDDEN","9999","5\n6\n15"),("HIDDEN","48","0\n2\n0")]),
+    ("PUBLIC","74","0\n3\n2"),("PUBLIC","400","2\n2\n16"),("PUBLIC","23","0\n0\n23"),("PUBLIC","168","1\n0\n0"),("PUBLIC","24","0\n1\n0"),("HIDDEN","0","0\n0\n0"),("HIDDEN","167","0\n6\n23"),("HIDDEN","169","1\n0\n1"),("HIDDEN","9999","59\n3\n15"),("HIDDEN","48","0\n2\n0")]),
    (19,"แปลงเลขโรมัน (RomanToNum)","รับอักษรโรมัน 1 ตัว ได้แก่ I, V, X, L, C, D หรือ M แล้วแสดงค่าตัวเลข หากเป็นตัวอื่นให้แสดง Invalid","อักขระ 1 ตัว","ค่าตัวเลขหรือ Invalid","I","1",[
     ("PUBLIC","I","1"),("PUBLIC","L","50"),("PUBLIC","m","Invalid"),("PUBLIC","V","5"),("PUBLIC","X","10"),("HIDDEN","C","100"),("HIDDEN","D","500"),("HIDDEN","M","1000"),("HIDDEN","i","Invalid"),("HIDDEN","A","Invalid")]),
    (20,"เลขในดวงใจ (SecretNumber)","รับจำนวน N และจำนวนเต็มบวก N ค่า เลขในดวงใจ = (จำนวนเลขคู่ × 6) + (จำนวนเลขคี่ × 5)","2 บรรทัด: N และตัวเลข N ค่า","เลขในดวงใจ","6\n50 51 32 33 41 37","32",[
@@ -88,7 +86,10 @@ def _init_db(c):
    if c.execute("SELECT COUNT(*) FROM tc WHERE qid=?",(qid,)).fetchone()[0] != len(cases):
     c.execute("DELETE FROM tc WHERE qid=?",(qid,))
     c.executemany("INSERT INTO tc(qid,kind,input,expected,weight) VALUES(?,?,?,?,1)",[(qid,k,i,e) for k,i,e in cases])
-  ensure_test_data(c)
+ c.execute("DELETE FROM sub WHERE qid BETWEEN 1 AND 10")
+ c.execute("DELETE FROM tc WHERE qid BETWEEN 1 AND 10")
+ c.execute("DELETE FROM q WHERE id BETWEEN 1 AND 10")
+ ensure_test_data(c)
  c.commit()
 
 def db():
@@ -211,6 +212,12 @@ class H(BaseHTTPRequestHandler):
     item["max_score"]=float(max_score)
     item.pop("ignored",None)
     out.append(item)
+   return send(self,out)
+  if self.path=="/api/admin/solutions" and u["role"]=="admin":
+   rows=c.execute("SELECT id,title FROM q WHERE id>=11 ORDER BY id").fetchall()
+   out=[]
+   for no,row in enumerate(rows,1):
+    out.append({"number":no,"qid":row["id"],"title":row["title"],"solution":SOLUTIONS.get(row["id"],"")})
    return send(self,out)
   if self.path.startswith("/api/admin/exams/") and u["role"]=="admin":
    try:eid=int(self.path.rsplit("/",1)[1])
