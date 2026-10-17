@@ -2,6 +2,7 @@ import os,sqlite3,secrets,hashlib,hmac,json,tempfile,subprocess,base64,time,thre
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 from http import cookies
+from urllib.parse import urlsplit
 BASE=Path(__file__).parent; DB=BASE/"data.db"; WEB=BASE/"index.html"; ADMIN_WEB=BASE/"admin.html"; SESS={}; SESSION_SECRET=os.getenv("SESSION_SECRET","codinglab-demo-secret-change-in-render"); DB_INIT_LOCK=threading.Lock(); DB_READY=False
 TEST_CASES={
 1:[["PUBLIC","5 10","15"],["PUBLIC","0 0","0"],["PUBLIC","-5 12","7"],["PUBLIC","123 456","579"],["PUBLIC","-10 -20","-30"],["HIDDEN","1 999","1000"],["HIDDEN","10000 25000","35000"],["HIDDEN","7 -3","4"],["HIDDEN","-100 250","150"],["HIDDEN","999999 1","1000000"]],
@@ -197,28 +198,50 @@ class H(BaseHTTPRequestHandler):
   now=int(time.time()); remaining=max(0,(row["expires_at"] or now)-now) if row["mode"]=="timed" else 0
   return {"active":True,"exam":dict(row),"remaining_seconds":remaining}
 
+ def do_HEAD(self):
+  path = urlsplit(self.path).path
+  if path in ("/", "/index.html"):
+   target = WEB
+  elif path in ("/admin", "/admin/"):
+   target = ADMIN_WEB
+  elif path in ("/documents/btu.html", "/documents/herbs.html"):
+   target = BASE / path.lstrip("/")
+  else:
+   self.send_response(404)
+   self.end_headers()
+   return
+  if not target.is_file():
+   self.send_response(404)
+   self.end_headers()
+   return
+  self.send_response(200)
+  self.send_header("Content-Type", "text/html; charset=utf-8")
+  self.send_header("Content-Length", str(target.stat().st_size))
+  self.end_headers()
+
  def do_GET(self):
-  if self.path=="/" or self.path=="/index.html":
+  path = urlsplit(self.path).path
+  if path=="/" or path=="/index.html":
    b=WEB.read_bytes(); self.send_response(200); self.send_header("Content-Type","text/html; charset=utf-8"); self.send_header("Content-Length",str(len(b))); self.end_headers(); self.wfile.write(b); return
-  if self.path=="/admin" or self.path=="/admin/":
+  if path=="/admin" or path=="/admin/":
    if not ADMIN_WEB.exists(): return send(self,{"error":"admin page not found"},404)
    b=ADMIN_WEB.read_bytes(); self.send_response(200); self.send_header("Content-Type","text/html; charset=utf-8"); self.send_header("Content-Length",str(len(b))); self.end_headers(); self.wfile.write(b); return
-  if self.path in ("/documents/btu.html","/documents/herbs.html"):
-   doc_path=BASE/self.path.lstrip("/")
+  if path in ("/documents/btu.html","/documents/herbs.html"):
+   doc_path=BASE/path.lstrip("/")
    if not doc_path.is_file(): return send(self,{"error":"document not found"},404)
    b=doc_path.read_bytes(); self.send_response(200); self.send_header("Content-Type","text/html; charset=utf-8"); self.send_header("Content-Length",str(len(b))); self.end_headers(); self.wfile.write(b); return
   u=self.user(); c=db()
-  if self.path=="/api/me":
+  if path=="/api/me":
    if not u:return send(self,{"user":None})
    active=c.execute("SELECT participant_name FROM exam WHERE user_id=? AND status='ACTIVE' ORDER BY id DESC LIMIT 1",(u["id"],)).fetchone()
    user=dict(u)
    if active and active["participant_name"]: user["display_name"]=active["participant_name"]
    return send(self,{"user":user})
-  if self.path=="/api/exam/state":
+  if path=="/api/exam/state":
    return send(self,self.exam_payload(self.current_exam(c,u) if u else None))
-  if self.path.startswith("/api/summary/"):
+  if path.startswith("/api/summary/"):
    if not u:return send(self,{"error":"login"},401)
-   eid=int(self.path.rsplit("/",1)[1]); ex=c.execute("SELECT * FROM exam WHERE id=? AND user_id=?",(eid,u["id"])).fetchone()
+   eid=int(path.rsplit("/",1)[1]); ex=c.execute("SELECT * FROM exam WHERE id=? AND user_id=?",(eid,u["id"])).fetchone()
    if not ex:return send(self,{"error":"exam not found"},404)
    qs=c.execute("SELECT id,title,score FROM q WHERE id>=11 ORDER BY id").fetchall()
    rows=c.execute("SELECT s.qid,s.score,s.passed,s.total,s.status FROM sub s WHERE s.user_id=? AND s.exam_id=? AND s.id=(SELECT MAX(s2.id) FROM sub s2 WHERE s2.user_id=s.user_id AND s2.exam_id=s.exam_id AND s2.qid=s.qid)",(u["id"],eid)).fetchall()
@@ -231,14 +254,14 @@ class H(BaseHTTPRequestHandler):
     items.append({"qid":q["id"],"title":q["title"],"max_score":q["score"],"score":val,"passed":x["passed"] if x else 0,"test_total":x["total"] if x else 10,"status":x["status"] if x else "NOT_SUBMITTED"})
    return send(self,{"exam":dict(ex),"participant_name":ex["participant_name"],"total_score":round(total,2),"max_score":round(max_total,2),"solved":solved,"questions":items})
   if not u: return send(self,{"error":"login"},401)
-  if self.path=="/api/questions":
+  if path=="/api/questions":
    return send(self,[dict(x) for x in c.execute("SELECT id,title,body,input,output,sample_in,sample_out,score FROM q WHERE id>=11 ORDER BY id")])
-  if self.path.startswith("/api/questions/"):
-   qid=int(self.path.rsplit("/",1)[1]); q=c.execute("SELECT * FROM q WHERE id=?",(qid,)).fetchone()
+  if path.startswith("/api/questions/"):
+   qid=int(path.rsplit("/",1)[1]); q=c.execute("SELECT * FROM q WHERE id=?",(qid,)).fetchone()
    if not q:return send(self,{"error":"not found"},404)
    return send(self,dict(q))
-  if self.path.startswith("/api/history/"):
-   qid=int(self.path.rsplit("/",1)[1]); rows=c.execute("SELECT id,status,score,passed,total,error,created,details FROM sub WHERE user_id=? AND qid=? ORDER BY id DESC",(u["id"],qid)).fetchall()
+  if path.startswith("/api/history/"):
+   qid=int(path.rsplit("/",1)[1]); rows=c.execute("SELECT id,status,score,passed,total,error,created,details FROM sub WHERE user_id=? AND qid=? ORDER BY id DESC",(u["id"],qid)).fetchall()
    out=[]
    for row in rows:
     item=dict(row)
@@ -246,10 +269,10 @@ class H(BaseHTTPRequestHandler):
     except Exception:item["details"]=[]
     out.append(item)
    return send(self,out)
-  if self.path=="/api/submissions":
+  if path=="/api/submissions":
    rows=c.execute("SELECT sub.id,sub.qid,q.title,sub.status,sub.score,sub.passed,sub.total,sub.created,sub.exam_id,exam.mode,exam.duration_minutes,exam.participant_name FROM sub JOIN q ON q.id=sub.qid LEFT JOIN exam ON exam.id=sub.exam_id WHERE sub.user_id=? ORDER BY sub.id DESC LIMIT 200",(u["id"],)).fetchall()
    return send(self,[dict(r) for r in rows])
-  if self.path=="/api/admin/exams" and u["role"]=="admin":
+  if path=="/api/admin/exams" and u["role"]=="admin":
    rows=c.execute("""
     SELECT e.id,e.participant_name,e.mode,e.duration_minutes,e.started_at,e.expires_at,e.finished_at,e.status,e.created,
            COALESCE(SUM(s.score),0) AS total_score,
@@ -272,14 +295,14 @@ class H(BaseHTTPRequestHandler):
     item.pop("ignored",None)
     out.append(item)
    return send(self,out)
-  if self.path=="/api/admin/solutions" and u["role"]=="admin":
+  if path=="/api/admin/solutions" and u["role"]=="admin":
    rows=c.execute("SELECT id,title FROM q WHERE id>=11 ORDER BY id").fetchall()
    out=[]
    for no,row in enumerate(rows,1):
     out.append({"number":no,"qid":row["id"],"title":row["title"],"solution":SOLUTIONS.get(row["id"],"")})
    return send(self,out)
-  if self.path.startswith("/api/admin/exams/") and u["role"]=="admin":
-   try:eid=int(self.path.rsplit("/",1)[1])
+  if path.startswith("/api/admin/exams/") and u["role"]=="admin":
+   try:eid=int(path.rsplit("/",1)[1])
    except Exception:return send(self,{"error":"invalid exam id"},400)
    ex=c.execute("SELECT * FROM exam WHERE id=?",(eid,)).fetchone()
    if not ex:return send(self,{"error":"exam not found"},404)
@@ -298,11 +321,11 @@ class H(BaseHTTPRequestHandler):
    total=sum(float(x["score"] or 0) for x in subs)
    max_total=sum(float(x["max_score"] or 0) for x in subs) if subs else sum(float(q["score"] or 0) for q in c.execute("SELECT score FROM q").fetchall())
    return send(self,{"exam":dict(ex),"total_score":round(total,2),"max_score":round(max_total,2),"submissions":subs})
-  if self.path=="/api/admin/submissions" and u["role"]=="admin":
+  if path=="/api/admin/submissions" and u["role"]=="admin":
    return send(self,[dict(x) for x in c.execute("SELECT sub.*,users.username FROM sub JOIN users ON users.id=sub.user_id ORDER BY sub.id DESC LIMIT 100")])
   return send(self,{"error":"not found"},404)
  def do_POST(self):
-  p=self.path; x=self.read(); c=db()
+  p=urlsplit(self.path).path; x=self.read(); c=db()
   if p=="/api/login":
    username=str(x.get("username","")).strip().lower(); password=str(x.get("password",""))
    u=c.execute("SELECT * FROM users WHERE lower(username)=?",(username,)).fetchone(); ph=hashlib.sha256(password.encode()).hexdigest()
