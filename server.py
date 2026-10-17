@@ -14,8 +14,10 @@ TEST_CASES={
 8:[["PUBLIC","4\n1 2 3 4","10"],["PUBLIC","3\n10 20 30","60"],["PUBLIC","5\n1 -2 3 -4 5","3"],["PUBLIC","1\n99","99"],["PUBLIC","6\n0 0 0 0 0 0","0"],["HIDDEN","7\n1 2 3 4 5 6 7","28"],["HIDDEN","5\n10 -10 20 -20 30","30"],["HIDDEN","4\n100 200 300 400","1000"],["HIDDEN","8\n-1 -2 -3 -4 -5 -6 -7 -8","-36"],["HIDDEN","2\n999 1","1000"]],
 9:[["PUBLIC","1","NO"],["PUBLIC","2","YES"],["PUBLIC","3","YES"],["PUBLIC","4","NO"],["PUBLIC","17","YES"],["HIDDEN","18","NO"],["HIDDEN","97","YES"],["HIDDEN","100","NO"],["HIDDEN","101","YES"],["HIDDEN","1000","NO"]],
 10:[["PUBLIC","5\n4 1 3 2 5","1 2 3 4 5"],["PUBLIC","3\n3 2 1","1 2 3"],["PUBLIC","4\n10 5 8 1","1 5 8 10"],["PUBLIC","1\n99","99"],["PUBLIC","5\n5 5 3 3 1","1 3 3 5 5"],["HIDDEN","6\n0 -1 4 -3 2 1","-3 -1 0 1 2 4"],["HIDDEN","4\n100 20 50 10","10 20 50 100"],["HIDDEN","7\n7 6 5 4 3 2 1","1 2 3 4 5 6 7"],["HIDDEN","5\n-5 -2 -9 -1 -7","-9 -7 -5 -2 -1"],["HIDDEN","8\n1 9 2 8 3 7 4 6","1 2 3 4 6 7 8 9"]]
+25:[["PUBLIC","4 5","20\n18000"],["PUBLIC","1 13","13\n9000"],["PUBLIC","2 7","14\n13000"],["PUBLIC","1 19","19\n13000"],["PUBLIC","2 10","20\n18000"],["PUBLIC","2 13","26\n18000"],["PUBLIC","1 29","29\n20000"],["PUBLIC","5 7","35\n24000"],["HIDDEN","43 1","43\n30000"],["HIDDEN","4 11","44\n0"]],
+26:[["PUBLIC","8 10","1600"],["PUBLIC","5 10","1000"],["PUBLIC","7 12","1680"],["PUBLIC","1 1","20"],["PUBLIC","1 4","80"],["PUBLIC","2 3","120"],["HIDDEN","6 7","840"],["HIDDEN","12 12","2880"],["HIDDEN","20 30","12000"],["HIDDEN","100 200","400000"]]
 }
-
+ 
 SOLUTIONS={
  11: "#include <stdio.h>\n\nint main(void) {\n    double r;\n    scanf(\"%lf\", &r);\n    double area = 3.142 * r * r;\n    printf(\"%.3f\\n\", area);\n    return 0;\n}",
  12: "#include <stdio.h>\n\nint main(void) {\n    int score;\n    scanf(\"%d\", &score);\n    if (score >= 90 && score <= 100) printf(\"A\");\n    else if (score >= 85) printf(\"B+\");\n    else if (score >= 75) printf(\"B\");\n    else if (score >= 70) printf(\"C+\");\n    else if (score >= 60) printf(\"C\");\n    else printf(\"See you next semester\");\n    printf(\"\\n\");\n    return 0;\n}",
@@ -31,6 +33,8 @@ SOLUTIONS={
  22: "#include <stdio.h>\n\nint main(void) {\n    int n; scanf(\"%d\",&n);\n    const int seq[5]={1,2,3,4,0};\n    for(int i=1;i<=n;i++){\n        for(int j=0;j<i;j++){int v=(i-1-j)%5; printf(\"%d\",seq[v]); if(j+1<i) printf(\" \");}\n        printf(\"\\n\");\n    }\n    return 0;\n}",
  23: "#include <stdio.h>\n\nint main(void) {\n    long long a,b; scanf(\"%lld %lld\",&a,&b); printf(\"%lld\\n\",a+b); return 0;\n}",
  24: "#include <stdio.h>\n\nint main(void) {\n    int a,b,c; scanf(\"%d %d %d\",&a,&b,&c);\n    if(a<=0||b<=0||c<=0||a+b<=c||a+c<=b||b+c<=a) printf(\"0\\n\");\n    else if(a==b&&b==c) printf(\"1\\n\");\n    else if(a==b||b==c||a==c) printf(\"2\\n\");\n    else printf(\"3\\n\");\n    return 0;\n}"
+ 25: "#include <stdio.h>\n\nint main(void) {\n    long long w, l, area;\n    int btu;\n    scanf(\"%lld %lld\", &w, &l);\n    area = w * l;\n    if (area <= 13) btu = 9000;\n    else if (area <= 19) btu = 13000;\n    else if (area <= 26) btu = 18000;\n    else if (area <= 29) btu = 20000;\n    else if (area <= 35) btu = 24000;\n    else if (area <= 43) btu = 30000;\n    else btu = 0;\n    printf(\"%lld\\n%d\\n\", area, btu);\n    return 0;\n}",
+ 26: "#include <stdio.h>\n\nint main(void) {\n    long long w, l;\n    scanf(\"%lld %lld\", &w, &l);\n    printf(\"%lld\\n\", w * l * 20);\n    return 0;\n}"
 }
 
 def ensure_test_data(c):
@@ -106,6 +110,8 @@ def _init_db(c):
  c.execute("DELETE FROM sub WHERE qid BETWEEN 1 AND 10")
  c.execute("DELETE FROM tc WHERE qid BETWEEN 1 AND 10")
  c.execute("DELETE FROM q WHERE id BETWEEN 1 AND 10")
+ c.execute("INSERT OR IGNORE INTO q VALUES(?,?,?,?,?,?,?,?)",(25,"ติดแอร์ (BTU)","รับความกว้างและความยาวของห้องเป็นจำนวนเต็มบวก แล้วคำนวณพื้นที่ห้อง (กว้าง × ยาว) และเลือกขนาดแอร์ตามพื้นที่: ไม่เกิน 13 ตร.ม. ใช้ 9000 BTU, ไม่เกิน 19 ใช้ 13000, ไม่เกิน 26 ใช้ 18000, ไม่เกิน 29 ใช้ 20000, ไม่เกิน 35 ใช้ 24000, ไม่เกิน 43 ใช้ 30000; หากเกิน 43 ตร.ม. ให้แสดง 0","จำนวนเต็มบวก 2 จำนวน: ความกว้างและความยาว (เมตร)","แสดง 2 บรรทัด: พื้นที่ห้อง (ตร.ม.) และขนาดแอร์ (BTU)","4 5","20\n18000",10))
+ c.execute("INSERT OR IGNORE INTO q VALUES(?,?,?,?,?,?,?,?)",(26,"เก็บสมุนไพร (Herbs)","รับความกว้างและความยาวของแปลงสมุนไพรเป็นจำนวนเต็มบวก แปลงปลูกสมุนไพร 4 ต้นต่อตารางเมตร และค่าจ้างเก็บต้นละ 5 บาท ให้คำนวณค่าจ้างทั้งหมด","จำนวนเต็มบวก 2 จำนวน: ความกว้างและความยาว (เมตร)","ค่าจ้างทั้งหมดเป็นจำนวนเต็ม 1 บรรทัด","8 10","1600",10))
  ensure_test_data(c)
  c.commit()
 
@@ -193,6 +199,10 @@ class H(BaseHTTPRequestHandler):
   if self.path=="/admin" or self.path=="/admin/":
    if not ADMIN_WEB.exists(): return send(self,{"error":"admin page not found"},404)
    b=ADMIN_WEB.read_bytes(); self.send_response(200); self.send_header("Content-Type","text/html; charset=utf-8"); self.send_header("Content-Length",str(len(b))); self.end_headers(); self.wfile.write(b); return
+  if self.path in ("/documents/btu.html","/documents/herbs.html"):
+   doc_path=BASE/self.path.lstrip("/")
+   if not doc_path.is_file(): return send(self,{"error":"document not found"},404)
+   b=doc_path.read_bytes(); self.send_response(200); self.send_header("Content-Type","text/html; charset=utf-8"); self.send_header("Content-Length",str(len(b))); self.end_headers(); self.wfile.write(b); return
   u=self.user(); c=db()
   if self.path=="/api/me":
    if not u:return send(self,{"user":None})
