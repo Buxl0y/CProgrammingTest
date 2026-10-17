@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ติดแอร์ (BTU) — คพ.102</title>
+<style>
+body{font-family:"Noto Sans Thai",Tahoma,sans-serif;max-width:900px;margin:32px auto;padding:0 22px;color:#172033;line-height:1.8}
+h1{text-align:center;font-size:28px}h2{font-size:18px;margin-top:24px}
+.meta{text-align:center;color:#56647a}.toolbar{text-align:right;margin:0 0 24px}
+button{padding:9px 15px;border:0;border-radius:8px;background:#235bd6;color:white;font:inherit;cursor:pointer}
+table{border-collapse:collapse;width:100%;margin:12px 0}th,td{border:1px solid #667085;padding:8px 12px;text-align:left}th{background:#e6f7df}
+pre{background:#f3f6fb;border:1px solid #dfe5ef;border-radius:8px;padding:12px;white-space:pre-wrap}
+@media print{body{margin:0 auto;padding:0 8px}.toolbar{display:none}}
+</style>
+</head>
+<body>
+<div class="toolbar"><button onclick="window.print()">พิมพ์ / บันทึกเป็น PDF</button></div>
+<div class="meta">คพ.102 พื้นฐานการแก้ปัญหาและการโปรแกรมคอมพิวเตอร์<br>เอกสารสอบเขียนโปรแกรมครั้งที่ 1</div>
+<h1>ติดแอร์ (BTU)</h1>
+<p>ทีมช่างบริษัท CS-Cooling รับจ้างติดแอร์ โดยแอร์ขนาดใหญ่สุดที่ทางบริษัทมีบริการคือขนาด 30000 BTU ก่อนติดตั้ง ทีมช่างจะวัดความกว้างและความยาวของห้องเป็นหน่วยเมตร (เป็นจำนวนเต็มเสมอ) เพื่อคำนวณขนาดห้อง จากนั้นเลือกขนาดแอร์ (BTU) ที่เหมาะสมตามตาราง</p>
+<table>
+<thead><tr><th>ขนาดแอร์ (BTU)</th><th>ขนาดห้อง</th></tr></thead>
+<tbody>
+<tr><td>9,000</td><td>ขนาดไม่เกิน 13 ตร.ม.</td></tr>
+<tr><td>13,000</td><td>ขนาดไม่เกิน 19 ตร.ม.</td></tr>
+<tr><td>18,000</td><td>ขนาดไม่เกิน 26 ตร.ม.</td></tr>
+<tr><td>20,000</td><td>ขนาดไม่เกิน 29 ตร.ม.</td></tr>
+<tr><td>24,000</td><td>ขนาดไม่เกิน 35 ตร.ม.</td></tr>
+<tr><td>30,000</td><td>ขนาดไม่เกิน 43 ตร.ม.</td></tr>
+</tbody>
+</table>
+<p>เขียนโปรแกรมรับความกว้างและความยาวของห้อง แล้วแสดงขนาดห้องเป็นตารางเมตรและขนาดแอร์ที่เหมาะสม หากพื้นที่ห้องใหญ่เกินกว่าจะใช้แอร์ 30000 BTU ให้แสดงขนาดแอร์เป็น 0</p>
+<h2>ข้อมูลเข้า</h2><p>มี 1 บรรทัด เป็นจำนวนเต็มบวก 2 จำนวน แทนความกว้างและความยาวของห้อง (หน่วยเมตร) กำหนดให้ข้อมูลเข้าถูกต้องตามรูปแบบและขอบเขต ไม่จำเป็นต้องตรวจสอบข้อมูลเข้า</p>
+<h2>ข้อมูลส่งออก</h2><p>มี 2 บรรทัด: บรรทัดแรกแสดงขนาดห้อง (ตารางเมตร) และบรรทัดที่สองแสดงขนาดแอร์ที่เหมาะสม (BTU)</p>
+<h2>ตัวอย่างที่ 1</h2><p>ข้อมูลเข้า</p><pre>4 5</pre><p>ข้อมูลส่งออก</p><pre>20
+18000</pre>
+<h2>ตัวอย่างที่ 2</h2><p>ข้อมูลเข้า</p><pre>5 7</pre><p>ข้อมูลส่งออก</p><pre>35
+24000</pre>
+<h2>ตัวอย่างที่ 3</h2><p>ข้อมูลเข้า</p><pre>7 7</pre><p>ข้อมูลส่งออก</p><pre>49
+0</pre>
+</body>
+</html>
